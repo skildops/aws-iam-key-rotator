@@ -1,6 +1,6 @@
 ## aws-iam-key-rotator
 
-![License](https://img.shields.io/github/license/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/codeql/master?label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/paliwalvimal/aws-iam-key-rotator?style=for-the-badge)
+![License](https://img.shields.io/github/license/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/codeql/main?label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/paliwalvimal/aws-iam-key-rotator?style=for-the-badge)
 
 This tool is responsible for generating a new IAM access key pair every X days and mails it to the user via SES. It will also delete the existing key pair after a few days of new key generation to allow the user to update the new key wherever required.
 
