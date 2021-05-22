@@ -1,6 +1,8 @@
 name: checkov
 on:
   push:
+    branches:
+      - master
   schedule:
     - cron: '30 8 * * 6'
 jobs:

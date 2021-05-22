@@ -13,6 +13,8 @@ name: "codeql"
 
 on:
   push:
+    branches:
+      - master
   schedule:
     - cron: '30 8 * * 6'
 
