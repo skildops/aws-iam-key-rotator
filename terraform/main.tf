@@ -107,10 +107,10 @@ resource "aws_iam_role_policy_attachment" "iam_key_creator_logs" {
 
 resource "aws_cloudwatch_event_rule" "iam_key_creator" {
   name        = "IAMAccessKeyCreator"
-  description = "Triggers a lambda function at 1200 hours UTC every day which creates a set of new access key pair for a user if the existing key pair is X days old"
+  description = "Triggers a lambda function periodically which creates a set of new access key pair for a user if the existing key pair is X days old"
   is_enabled  = true
 
-  schedule_expression = "cron(0 12 * * ? *)"
+  schedule_expression = "cron(${var.cron_expression})"
 }
 
 resource "aws_cloudwatch_event_target" "iam_key_creator" {

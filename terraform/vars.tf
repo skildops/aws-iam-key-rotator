@@ -76,6 +76,12 @@ variable "key_destructor_function_name" {
   description = "Name for lambda function responsible for deleting existing access key pair"
 }
 
+variable "cron_expression" {
+  type        = string
+  default     = "0 12 * * ? *"
+  description = "[CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked"
+}
+
 variable "lambda_runtime" {
   type        = string
   default     = "python3.8"

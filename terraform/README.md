@@ -1,4 +1,4 @@
-# Create resources for running iam-key-rotator
+# IAM Key Rotator
 
 ![Test](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/test/main?label=Test&style=for-the-badge) ![Checkov](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/checkov/main?label=Checkov&style=for-the-badge)
 
@@ -8,6 +8,8 @@ This terraform module will deploy the following services:
 - IAM Role Policy
 - CloudWatch Event
 - Lambda
+
+**Note:** You need to implement [remote backend](https://www.terraform.io/docs/language/settings/backends/index.html) by yourself and is recommended.
 
 # Usage Instructions
 
@@ -34,6 +36,7 @@ This terraform module will deploy the following services:
 | key_creator_function_name | Name for lambda function responsible for creating new access key pair | `string` | `"iam-key-creator"` | no |
 | key_destructor_role_name | Name for IAM role to assocaite with key destructor lambda function | `string` | `"iam-key-destructor"` | no |
 | key_destructor_function_name | Name for lambda function responsible for deleting existing access key pair | `string` | `"iam-key-destructor"` | no |
+| cron_expression | [CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked | `string` | `"0 12 * * ? *"` | no |
 | lambda_runtime | Lambda runtime to use for code execution for both creator and destructor function | `string` | `"python3.8"` | no |
 | function_memory_size | Amount of memory to allocate to both creator and destructor function | `number` | `128` | no |
 | function_timeout | Timeout to set for both creator and destructor function | `number` | `10` | no |
@@ -44,4 +47,9 @@ This terraform module will deploy the following services:
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| table_name | Name of dynamodb table created for storing access keys to be deleted |
+| key_creator_function_name | Name of lambda function created to create a set of new key pair for IAM user |
+| key_destructor_function_name | Name of lambda function created to delete existing key pair which has reached its expiry |
+| cron_expression | Interval at which `key creator` function will be invoked |
