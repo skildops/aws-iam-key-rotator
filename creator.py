@@ -7,10 +7,20 @@ import pytz
 from datetime import datetime, date
 from botocore.exceptions import ClientError
 
+# No. of days to wait before existing key pair is deleted once a new key pair is generated
 DAYS_FOR_DELETION = os.environ.get('DAYS_FOR_DELETION', 5)
+
+# Table name which holds existing access key pair details to be deleted
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE')
+
+# Days after which a new access key pair should be generated
 ACCESS_KEY_AGE = os.environ.get('ACCESS_KEY_AGE', 85)
+
+# Mail client to use for sending new key creation or existing key deletion mail
 MAIL_CLIENT = os.environ.get('MAIL_CLIENT', 'ses')
+
+# From address to be used while sending mail
+MAIL_FROM = os.environ.get('MAIL_FROM')
 
 # AWS_REGION environment variable is by default available within lambda environment
 iam = boto3.client('iam', region_name=os.environ.get('AWS_REGION'))
@@ -109,7 +119,7 @@ def create_user_key(userName, user):
                 )
 
                 # Email keys to user
-                send_email(MAIL_CLIENT, user['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
+                send_email(user['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
 
                 # Mark exisiting key to destory after X days
                 mark_key_for_destroy(userName, user['keys'][0]['ak'], user['email'])
@@ -118,12 +128,16 @@ def create_user_keys(users):
     with concurrent.futures.ThreadPoolExecutor(10) as executor:
         [executor.submit(create_user_key, user, users[user]) for user in users]
 
-def send_email(mailClient, email, userName, accessKey, secretKey, existingAccessKey):
-    if mailClient == 'ses':
-        import ses_mailer
-        ses_mailer.send_email(email, userName, accessKey, secretKey, existingAccessKey)
-    else:
-        logger.error('{}: Invalid mailer client. Supported mail clients: AWS SES'.format(mailClient))
+def send_email(email, userName, accessKey, secretKey, existingAccessKey):
+    mailBody = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>A new access key pair has been generated for you. Please update the same wherever necessary.<br/><br/>Access Key: <strong>{}</strong><br/>Secret Access Key: <strong>{}</strong><br/><br/><strong>Note:</strong> Existing key pair <strong>{}</strong> will be deleted after {} days so please update the new key pair wherever required.<br/><br/>Thanks,<br/>Your Security Team</body></html>'.format('New Access Key Pair', userName, accessKey, secretKey, existingAccessKey, DAYS_FOR_DELETION)
+    try:
+        if MAIL_CLIENT == 'ses':
+            import ses_mailer
+            ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+        else:
+            logger.error('{}: Invalid mailer client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
+    except (Exception, ClientError) as ce:
+        logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
 
 def mark_key_for_destroy(userName, ak, email):
     try:
