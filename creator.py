@@ -10,11 +10,10 @@ from botocore.exceptions import ClientError
 DAYS_FOR_DELETION = os.environ.get('DAYS_FOR_DELETION', 5)
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE')
 ACCESS_KEY_AGE = os.environ.get('ACCESS_KEY_AGE', 85)
-MAIL_FROM = os.environ.get('MAIL_FROM')
+MAIL_CLIENT = os.environ.get('MAIL_CLIENT', 'ses')
 
-# AWS_REGION is by default available within lambda environment
+# AWS_REGION environment variable is by default available within lambda environment
 iam = boto3.client('iam', region_name=os.environ.get('AWS_REGION'))
-ses = boto3.client('ses', region_name=os.environ.get('AWS_REGION'))
 dynamodb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION'))
 
 logger = logging.getLogger('creator')
@@ -26,10 +25,17 @@ def fetch_users_with_email(user):
         UserName=user
     )
 
+    userAttributes = {}
     for t in resp['Tags']:
         if t['Key'].lower() == 'email':
-            return True, user, t['Value']
-    
+            userAttributes['email'] = t['Value']
+
+        if t['Key'].lower() == 'rotate_after_days':
+            userAttributes['rotate_after'] = t['Value']
+
+    if 'email' in userAttributes:
+        return True, user, userAttributes
+
     return False, user, None
 
 def fetch_user_keys(user):
@@ -54,25 +60,25 @@ def fetch_user_details():
         logger.info('Fetching all users')
         while True:
             resp = iam.list_users(**params)
-            
+
             for u in resp['Users']:
                 users[u['UserName']] = {}
-            
+
             try:
                 params['Marker'] = resp['Marker']
             except Exception:
                 break
-        
+
         logger.info('Fetching tags for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
             results = [executor.submit(fetch_users_with_email, user) for user in users]
 
         for f in concurrent.futures.as_completed(results):
-            hasEmail, userName, email = f.result()
+            hasEmail, userName, userAttributes = f.result()
             if not hasEmail:
                 users.pop(userName)
             else:
-                users[userName]['email'] = email
+                users[userName]['attributes'] = userAttributes
 
         logger.info('Fetching keys for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -83,7 +89,7 @@ def fetch_user_details():
             users[userName]['keys'] = keys
     except ClientError as ce:
         logger.error(ce)
-    
+
     return users
 
 def create_user_key(userName, user):
@@ -93,16 +99,17 @@ def create_user_key(userName, user):
         logger.warn('Skipping key creation {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
     else:
         for k in user['keys']:
-            if k['ak_age_days'] <= ACCESS_KEY_AGE:
-                logger.info('Skipping key creation for {} because existing key is {} day(s) old'.format(userName, k['ak_age_days']))
+            rotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ACCESS_KEY_AGE
+            if k['ak_age_days'] <= rotationAge:
+                logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], rotationAge))
             else:
                 logger.info('Creating new access key for {}'.format(userName))
                 resp = iam.create_access_key(
                     UserName=userName
                 )
-                
-                # Send keys to user
-                send_email(user['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
+
+                # Email keys to user
+                send_email(MAIL_CLIENT, user['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
 
                 # Mark exisiting key to destory after X days
                 mark_key_for_destroy(userName, user['keys'][0]['ak'], user['email'])
@@ -111,31 +118,12 @@ def create_user_keys(users):
     with concurrent.futures.ThreadPoolExecutor(10) as executor:
         [executor.submit(create_user_key, user, users[user]) for user in users]
 
-def send_email(email, userName, accessKey, secretKey, existingAccessKey):
-    logger.info('Sending mail to {} ({})'.format(userName, email))
-    try:
-        ses.send_email(
-            Source='{}'.format(MAIL_FROM),
-            Destination={
-                'ToAddresses': [
-                    email
-                ]
-            },
-            Message={
-                'Subject': {
-                    'Data': 'New Access Key Pair'
-                },
-                'Body': {
-                    'Html': {
-                        'Data': '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>A new access key pair has been generated for you. Please update the same wherever necessary.<br/><br/>Access Key: <strong>{}</strong><br/>Secret Access Key: <strong>{}</strong><br/><br/><strong>Note:</strong> Existing key pair <strong>{}</strong> will be available ONLY for {} days so please update the new key pair wherever required.<br/><br/>Thanks,<br/>Your Security Team</body></html>'.format('New Access Key Pair', userName, accessKey, secretKey, existingAccessKey, DAYS_FOR_DELETION),
-                        'Charset': 'UTF-8'
-                    }
-                }
-            }
-        )
-        logger.info('Mail sent to {} ({})'.format(userName, email))
-    except (Exception, ClientError) as ce:
-        logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
+def send_email(mailClient, email, userName, accessKey, secretKey, existingAccessKey):
+    if mailClient == 'ses':
+        import ses_mailer
+        ses_mailer.send_email(email, userName, accessKey, secretKey, existingAccessKey)
+    else:
+        logger.error('{}: Invalid mailer client. Supported mail clients: AWS SES'.format(mailClient))
 
 def mark_key_for_destroy(userName, ak, email):
     try:
