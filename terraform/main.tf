@@ -157,6 +157,7 @@ resource "aws_lambda_function" "iam_key_creator" {
   environment {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
+      MAIL_CLIENT           = "ses"
       MAIL_FROM             = var.mail_from
       MAILGUN_API_URL       = var.mailgun_api_url
       MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)

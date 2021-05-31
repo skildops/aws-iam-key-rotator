@@ -134,6 +134,9 @@ def send_email(email, userName, accessKey, secretKey, existingAccessKey):
         if MAIL_CLIENT == 'ses':
             import ses_mailer
             ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+        elif MAIL_CLIENT == 'mailgun':
+            import mailgun_mailer
+            mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
         else:
             logger.error('{}: Invalid mailer client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
     except (Exception, ClientError) as ce:
