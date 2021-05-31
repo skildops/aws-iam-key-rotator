@@ -59,8 +59,7 @@ resource "aws_iam_role" "iam_key_creator" {
   name                  = var.key_creator_role_name
   assume_role_policy    = local.lambda_assume_policy
   force_detach_policies = true
-
-  tags = var.tags
+  tags                  = var.tags
 }
 
 resource "aws_iam_role_policy" "iam_key_creator_policy" {
@@ -127,6 +126,13 @@ resource "aws_lambda_permission" "iam_key_creator" {
   source_arn    = aws_cloudwatch_event_rule.iam_key_creator.arn
 }
 
+resource "aws_ssm_parameter" "mailgun" {
+  count = var.mailgun_api_key == "" ? 0 : 1
+  name  = "/secret/mailgun"
+  value = var.mailgun_api_key
+  type  = "SecureString"
+  tags  = var.tags
+}
 resource "aws_lambda_function" "iam_key_creator" {
   # checkov:skip=CKV_AWS_50: Enabling X-Ray tracing depends on user
   # checkov:skip=CKV_AWS_115: Setting reserved concurrent execution depends on user
@@ -152,8 +158,12 @@ resource "aws_lambda_function" "iam_key_creator" {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
       MAIL_FROM             = var.mail_from
+      MAILGUN_API_URL       = var.mailgun_api_url
+      MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
     }
   }
+
+  tags = var.tags
 }
 
 # ====== iam-key-destructor ======
@@ -161,6 +171,7 @@ resource "aws_iam_role" "iam_key_destructor" {
   name                  = var.key_destructor_role_name
   assume_role_policy    = local.lambda_assume_policy
   force_detach_policies = true
+  tags                  = var.tags
 }
 
 resource "aws_iam_role_policy" "iam_key_destructor_policy" {
@@ -250,4 +261,6 @@ resource "aws_lambda_function" "iam_key_destructor" {
       MAIL_FROM             = var.mail_from
     }
   }
+
+  tags = var.tags
 }
