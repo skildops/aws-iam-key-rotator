@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 DAYS_FOR_DELETION = os.environ.get('DAYS_FOR_DELETION', 5)
 
 # Table name which holds existing access key pair details to be deleted
-IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE')
+IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 
 # Days after which a new access key pair should be generated
 ACCESS_KEY_AGE = os.environ.get('ACCESS_KEY_AGE', 85)
@@ -20,7 +20,7 @@ ACCESS_KEY_AGE = os.environ.get('ACCESS_KEY_AGE', 85)
 MAIL_CLIENT = os.environ.get('MAIL_CLIENT', 'ses')
 
 # From address to be used while sending mail
-MAIL_FROM = os.environ.get('MAIL_FROM')
+MAIL_FROM = os.environ.get('MAIL_FROM', None)
 
 # AWS_REGION environment variable is by default available within lambda environment
 iam = boto3.client('iam', region_name=os.environ.get('AWS_REGION'))
@@ -78,6 +78,7 @@ def fetch_user_details():
                 params['Marker'] = resp['Marker']
             except Exception:
                 break
+        logging.info('User count: {}'.format(len(users)))
 
         logger.info('Fetching tags for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -89,6 +90,7 @@ def fetch_user_details():
                 users.pop(userName)
             else:
                 users[userName]['attributes'] = userAttributes
+        logger.info('User with email tag: {}'.format(users))
 
         logger.info('Fetching keys for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -113,16 +115,20 @@ def create_user_key(userName, user):
             if k['ak_age_days'] <= rotationAge:
                 logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], rotationAge))
             else:
-                logger.info('Creating new access key for {}'.format(userName))
-                resp = iam.create_access_key(
-                    UserName=userName
-                )
+                try:
+                    logger.info('Creating new access key for {}'.format(userName))
+                    resp = iam.create_access_key(
+                        UserName=userName
+                    )
+                    logger.info('New key pair generated for user {}'.format(userName))
 
-                # Email keys to user
-                send_email(user['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
+                    # Email keys to user
+                    send_email(user['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
 
-                # Mark exisiting key to destory after X days
-                mark_key_for_destroy(userName, user['keys'][0]['ak'], user['email'])
+                    # Mark exisiting key to destory after X days
+                    mark_key_for_destroy(userName, user['keys'][0]['ak'], user['email'])
+                except (Exception, ClientError) as ce:
+                    logger.error('Failed to create key pair. Reason: {}'.format(ce))
 
 def create_user_keys(users):
     with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -131,14 +137,15 @@ def create_user_keys(users):
 def send_email(email, userName, accessKey, secretKey, existingAccessKey):
     mailBody = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>A new access key pair has been generated for you. Please update the same wherever necessary.<br/><br/>Access Key: <strong>{}</strong><br/>Secret Access Key: <strong>{}</strong><br/><br/><strong>Note:</strong> Existing key pair <strong>{}</strong> will be deleted after {} days so please update the new key pair wherever required.<br/><br/>Thanks,<br/>Your Security Team</body></html>'.format('New Access Key Pair', userName, accessKey, secretKey, existingAccessKey, DAYS_FOR_DELETION)
     try:
+        logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'ses':
-            import ses_mailer
+            from . import ses_mailer
             ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
         elif MAIL_CLIENT == 'mailgun':
-            import mailgun_mailer
+            from . import mailgun_mailer
             mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
         else:
-            logger.error('{}: Invalid mailer client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
+            logger.error('{}: Invalid mail client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
     except (Exception, ClientError) as ce:
         logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
 
@@ -167,5 +174,10 @@ def mark_key_for_destroy(userName, ak, email):
         logger.error('Failed to mark key {} for deletion. Reason: {}'.format(ak, ce))
 
 def handler(event, context):
-    users = fetch_user_details()
-    create_user_keys(users)
+    if IAM_KEY_ROTATOR_TABLE is None:
+        logger.error('IAM_KEY_ROTATOR_TABLE is required. Current value: {}'.format(IAM_KEY_ROTATOR_TABLE))
+    elif MAIL_FROM is None:
+        logger.error('MAIL_FROM is required. Current value: {}'.format(MAIL_FROM))
+    else:
+        users = fetch_user_details()
+        create_user_keys(users)

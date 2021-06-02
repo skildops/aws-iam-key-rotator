@@ -54,6 +54,17 @@ resource "aws_dynamodb_table" "iam_key_rotator" {
   tags = var.tags
 }
 
+# ====== Lambda Layer =====
+resource "aws_lambda_layer_version" "pytz" {
+  filename         = "pytz.zip"
+  source_code_hash = filebase64sha256("pytz.zip")
+  description      = "https://pypi.org/project/pytz/"
+  layer_name       = "pytz"
+
+  compatible_runtimes = ["python3.6", "python3.7", "python3.8"]
+}
+
+
 # ====== iam-key-creator ======
 resource "aws_iam_role" "iam_key_creator" {
   name                  = var.key_creator_role_name
@@ -149,6 +160,8 @@ resource "aws_lambda_function" "iam_key_creator" {
   memory_size                    = var.function_memory_size
   timeout                        = var.function_timeout
   reserved_concurrent_executions = var.reserved_concurrent_executions
+
+  layers = [aws_lambda_layer_version.pytz.arn]
 
   tracing_config {
     mode = var.xray_tracing_mode
