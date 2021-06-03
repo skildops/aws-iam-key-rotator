@@ -118,7 +118,25 @@ variable "tags" {
   description = "Key value pair to assign to resources"
 }
 
+variable "mail_client" {
+  type        = string
+  default     = "ses"
+  description = "Mail client to use. **Supported Clients:** ses and mailgun"
+}
+
 variable "mail_from" {
   type        = string
-  description = "Email address which should be used for sending mail via AWS SES. **Note:** Prior setup of SES is required to use this feature"
+  description = "Email address which should be used for sending mails. **Note:** Prior setup of SES is required to use this feature"
+}
+
+variable "mailgun_api_url" {
+  type        = string
+  default     = null
+  description = "Mailgun API url for sending email. **Note:** Required if you want to use Mailgun as mail client"
+}
+
+variable "mailgun_api_key" {
+  type        = string
+  default     = ""
+  description = "API key for authenticating requests to Mailgun API. **Note:** Required if you want to use Mailgun as mail client"
 }
