@@ -43,7 +43,8 @@ This terraform module will deploy the following services:
 | reserved_concurrent_executions | Amount of reserved concurrent executions for this lambda function. A value of `0` disables lambda from being triggered and `-1` removes any concurrency limitations | `number` | `-1` | no |
 | xray_tracing_mode | Whether to sample and trace a subset of incoming requests with AWS X-Ray. **Possible values:** `PassThrough` and `Active` | `string` | `"PassThrough"` | no |
 | tags | Key value pair to assign to resources | `map(string)` | `{}` | no |
-| mail_from | Email address which should be used for sending mail via AWS SES. **Note:** Prior setup of SES is required to use this feature | `string` | n/a | yes |
+| mail_client | Mail client to use. **Supported Clients:** ses and mailgun | `string` | `"ses"` | no |
+| mail_from | Email address which should be used for sending mails. **Note:** Prior setup of SES is required to use this feature | `string` | n/a | yes |
 | mailgun_api_url | Mailgun API url for sending email. **Note:** Required if you want to use Mailgun as mail client | `string` | `null` | no |
 | mailgun_api_key | API key for authenticating requests to Mailgun API. **Note:** Required if you want to use Mailgun as mail client | `string` | `""` | no |
 

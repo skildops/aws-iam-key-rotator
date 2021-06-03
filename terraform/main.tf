@@ -1,4 +1,7 @@
+data "aws_caller_identity" "current" {}
+
 locals {
+  account_id           = data.aws_caller_identity.current.account_id
   lambda_assume_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -54,7 +57,7 @@ resource "aws_dynamodb_table" "iam_key_rotator" {
   tags = var.tags
 }
 
-# ====== Lambda Layer =====
+# ====== Lambda Layers =====
 resource "aws_lambda_layer_version" "pytz" {
   filename         = "pytz.zip"
   source_code_hash = filebase64sha256("pytz.zip")
@@ -64,6 +67,14 @@ resource "aws_lambda_layer_version" "pytz" {
   compatible_runtimes = ["python3.6", "python3.7", "python3.8"]
 }
 
+resource "aws_lambda_layer_version" "requests" {
+  filename         = "requests.zip"
+  source_code_hash = filebase64sha256("requests.zip")
+  description      = "https://pypi.org/project/requests/"
+  layer_name       = "requests"
+
+  compatible_runtimes = ["python3.6", "python3.7", "python3.8"]
+}
 
 # ====== iam-key-creator ======
 resource "aws_iam_role" "iam_key_creator" {
@@ -97,6 +108,13 @@ resource "aws_iam_role_policy" "iam_key_creator_policy" {
         ],
         "Effect": "Allow",
         "Resource": "${aws_dynamodb_table.iam_key_rotator.arn}"
+      },
+      {
+        "Action": [
+          "ssm:GetParameter"
+        ],
+        "Effect": "Allow",
+        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/*"
       },
       {
         "Action": [
@@ -139,7 +157,7 @@ resource "aws_lambda_permission" "iam_key_creator" {
 
 resource "aws_ssm_parameter" "mailgun" {
   count = var.mailgun_api_key == "" ? 0 : 1
-  name  = "/secret/mailgun"
+  name  = "/iakr/secret/mailgun"
   value = var.mailgun_api_key
   type  = "SecureString"
   tags  = var.tags
@@ -161,7 +179,7 @@ resource "aws_lambda_function" "iam_key_creator" {
   timeout                        = var.function_timeout
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
-  layers = [aws_lambda_layer_version.pytz.arn]
+  layers = [aws_lambda_layer_version.pytz.arn, aws_lambda_layer_version.requests.arn]
 
   tracing_config {
     mode = var.xray_tracing_mode
@@ -170,7 +188,7 @@ resource "aws_lambda_function" "iam_key_creator" {
   environment {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
-      MAIL_CLIENT           = "ses"
+      MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
       MAILGUN_API_URL       = var.mailgun_api_url
       MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
@@ -227,6 +245,13 @@ resource "aws_iam_role_policy" "iam_key_destructor_policy" {
       },
       {
         "Action": [
+          "ssm:GetParameter"
+        ],
+        "Effect": "Allow",
+        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/*"
+      },
+      {
+        "Action": [
           "ses:SendEmail"
         ],
         "Effect": "Allow",
@@ -265,6 +290,8 @@ resource "aws_lambda_function" "iam_key_destructor" {
   timeout                        = var.function_timeout
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
+  layers = [aws_lambda_layer_version.requests.arn]
+
   tracing_config {
     mode = var.xray_tracing_mode
   }
@@ -272,7 +299,7 @@ resource "aws_lambda_function" "iam_key_destructor" {
   environment {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
-      MAIL_CLIENT           = "ses"
+      MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
       MAILGUN_API_URL       = var.mailgun_api_url
       MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
