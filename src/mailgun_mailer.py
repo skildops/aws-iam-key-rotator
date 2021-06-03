@@ -19,7 +19,7 @@ def send_email(email, userName, mailFrom, mailBody):
         logger.error('Both MAILGUN_API_URL and MAILGUN_API_KEY_NAME is required for sending mail via Mailgun. Current values: MAILGUN_API_URL = {} and MAILGUN_API_KEY_NAME = {}'.format(MAILGUN_API_URL, MAILGUN_API_KEY_NAME))
         return False
 
-    logger.info('Fetching API key for SSM')
+    logger.info('Fetching API key from SSM')
     resp = ssm.get_parameter(
         Name=MAILGUN_API_KEY_NAME,
         WithDecryption=True
