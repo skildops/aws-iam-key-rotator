@@ -90,7 +90,7 @@ def fetch_user_details():
                 users.pop(userName)
             else:
                 users[userName]['attributes'] = userAttributes
-        logger.info('User with email tag: {}'.format(users))
+        logger.info('User with email tag: {}'.format([user for user in users]))
 
         logger.info('Fetching keys for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -139,10 +139,10 @@ def send_email(email, userName, accessKey, secretKey, existingAccessKey):
     try:
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'ses':
-            from . import ses_mailer
+            import ses_mailer
             ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
         elif MAIL_CLIENT == 'mailgun':
-            from . import mailgun_mailer
+            import mailgun_mailer
             mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
         else:
             logger.error('{}: Invalid mail client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
