@@ -109,11 +109,11 @@ def create_user_key(userName, user):
         if len(user['keys']) == 0:
             logger.info('Skipping key creation for {} because no existing key found'.format(userName))
         elif len(user['keys']) == 2:
-            logger.warn('Skipping key creation {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
+            logger.warn('Skipping key creation for {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
         else:
             for k in user['keys']:
                 rotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ACCESS_KEY_AGE
-                if k['ak_age_days'] <= rotationAge:
+                if k['ak_age_days'] <= int(rotationAge):
                     logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], rotationAge))
                 else:
                     logger.info('Creating new access key for {}'.format(userName))
