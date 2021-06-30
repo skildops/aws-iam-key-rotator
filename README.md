@@ -19,7 +19,10 @@ This tool is responsible for generating a new IAM access key pair every X days a
 ![aws-iam-key-rotator](iam-key-rotator.jpeg "AWS IAM Key Rotator")
 
 - CloudWatch triggers lambda function which checks the age of access key for all the IAM users who have **Email**(case-insensitive) tag attached.
-- If existing access key age is greater than `ACCESS_KEY_AGE` environment variable or `rotate_after` tag associated to the IAM user and if the user has a key pair associated a new key pair is generated and the same is mailed to the user via your selected mail service.
+- If existing access key age is greater than `ACCESS_KEY_AGE` environment variable or `ROTATE_AFTER_DAYS` tag associated to the IAM user and if the user ONLY has a single key pair associated a new key pair is generated and the same is mailed to the user via your selected mail service.
 - The existing access key is than stored in DynamoDB table with user details and an expiration timestamp.
-- DynamoDB stream triggers another lambda function which is responsible for deleting the old access key associated to IAM user if the stream event is `delete`.
+- DynamoDB stream triggers destructor lambda function which is responsible for deleting the old access key associated to IAM user if the stream event is `delete`.
 - In case it fails to delete the existing key pair the entry is added back to the DynamoDB table so that the same can be picked up later for retry.
+
+### Install
+- The [terraform module](terraform) included in this repo will setup everything required to automate IAM key rotation
