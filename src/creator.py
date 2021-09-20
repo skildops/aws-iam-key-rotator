@@ -29,6 +29,13 @@ dynamodb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION'))
 logger = logging.getLogger('creator')
 logger.setLevel(logging.INFO)
 
+def prepare_instruction(keyUpdateInstructions):
+    sortedKeys = sorted(keyUpdateInstructions)
+    preparedInstruction = ''
+    preparedInstruction = [preparedInstruction + keyUpdateInstructions[k] + ' ' for k in sortedKeys]
+
+    return preparedInstruction
+
 def fetch_users_with_email(user):
     logger.info('Fetching tags for {}'.format(user))
     resp = iam.list_user_tags(
@@ -36,6 +43,7 @@ def fetch_users_with_email(user):
     )
 
     userAttributes = {}
+    keyUpdateInstructions = {}
     for t in resp['Tags']:
         if t['Key'].lower() == 'ikr:email':
             userAttributes['email'] = t['Value']
@@ -43,11 +51,13 @@ def fetch_users_with_email(user):
         if t['Key'].lower() == 'ikr:rotate_after_days':
             userAttributes['rotate_after'] = t['Value']
 
-        if 'ikr:instruction_' in t['Key'].lower():
-            if 'instruction' not in userAttributes:
-                userAttributes['instruction'] = {}
+        if t['Key'].lower().startswith('ikr:instruction_'):
+            keyUpdateInstructions[int(t['Key'].split('_')[1])] = t['Value']
 
-            userAttributes['instruction'][str(t['Key'].split('_')[1])] = t['Value']
+    if len(keyUpdateInstructions) > 0:
+        userAttributes['instruction'] = prepare_instruction(keyUpdateInstructions)
+    else:
+        userAttributes['instruction'] = ''
 
     if 'email' in userAttributes:
         return True, user, userAttributes
@@ -110,9 +120,6 @@ def fetch_user_details():
 
     return users
 
-def prepare_instruction(instruction):
-    return ''
-
 def create_user_key(userName, user):
     try:
         if len(user['keys']) == 0:
@@ -132,7 +139,7 @@ def create_user_key(userName, user):
                     logger.info('New key pair generated for user {}'.format(userName))
 
                     # Email keys to user
-                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], prepare_instruction(user['attributes']['instruction']), user['keys'][0]['ak'])
+                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'])
 
                     # Mark exisiting key to destory after X days
                     mark_key_for_destroy(userName, user['keys'][0]['ak'], user['attributes']['email'])
