@@ -29,7 +29,7 @@ dynamodb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION'))
 logger = logging.getLogger('creator')
 logger.setLevel(logging.INFO)
 
-def fetch_users_with_email(user):
+def fetch_users_with_notification_enabled(user):
     logger.info('Fetching tags for {}'.format(user))
     resp = iam.list_user_tags(
         UserName=user
@@ -37,13 +37,19 @@ def fetch_users_with_email(user):
 
     userAttributes = {}
     for t in resp['Tags']:
+        if t['Key'].lower() == 'notification_channel':
+            userAttributes['notification_channel'] = t['Value']
+
         if t['Key'].lower() == 'email':
             userAttributes['email'] = t['Value']
+
+        if t['Key'].lower() == 'slack_url':
+            userAttributes['slack_url'] = t['Value']
 
         if t['Key'].lower() == 'rotate_after_days':
             userAttributes['rotate_after'] = t['Value']
 
-    if 'email' in userAttributes:
+    if 'notification_channel' in userAttributes:
         return True, user, userAttributes
 
     return False, user, None
@@ -82,15 +88,15 @@ def fetch_user_details():
 
         logger.info('Fetching tags for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
-            results = [executor.submit(fetch_users_with_email, user) for user in users]
+            results = [executor.submit(fetch_users_with_notification_enabled, user) for user in users]
 
         for f in concurrent.futures.as_completed(results):
-            hasEmail, userName, userAttributes = f.result()
-            if not hasEmail:
+            hasNotificationEnabled, userName, userAttributes = f.result()
+            if not hasNotificationEnabled:
                 users.pop(userName)
             else:
                 users[userName]['attributes'] = userAttributes
-        logger.info('User with email tag: {}'.format([user for user in users]))
+        logger.info('User with notification enabled: {}'.format([user for user in users]))
 
         logger.info('Fetching keys for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -103,6 +109,77 @@ def fetch_user_details():
         logger.error(ce)
 
     return users
+
+def send_email(email, userName, accessKey, secretKey, existingAccessKey):
+    mailBody = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>A new access key pair has been generated for you. Please update the same wherever necessary.<br/><br/>Access Key: <strong>{}</strong><br/>Secret Access Key: <strong>{}</strong><br/><br/><strong>Note:</strong> Existing key pair <strong>{}</strong> will be deleted after {} days so please update the new key pair wherever required.<br/><br/>Thanks,<br/>Your Security Team</body></html>'.format('New Access Key Pair', userName, accessKey, secretKey, existingAccessKey, DAYS_FOR_DELETION)
+    try:
+        logger.info('Using {} as mail client'.format(MAIL_CLIENT))
+        if MAIL_CLIENT == 'ses':
+            import ses_mailer
+            ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+        elif MAIL_CLIENT == 'mailgun':
+            import mailgun_mailer
+            mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+        else:
+            logger.error('{}: Invalid mail client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
+    except (Exception, ClientError) as ce:
+        logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
+
+def notify_via_slack(slackUrl, userName, existingAccessKey, accessKey, secretKey):
+    try:
+        import slack
+        slack.notify(slackUrl, userName, existingAccessKey, accessKey, secretKey)
+    except (Exception, ClientError) as ce:
+        logger.error('Failed to notify user {} via slack. Reason: {}'.format(userName, ce))
+
+def mark_key_for_destroy(userName, ak, notificationChannel, notificationEndpoint):
+    try:
+        today = date.today()
+        dynamodb.put_item(
+            TableName=IAM_KEY_ROTATOR_TABLE,
+            Item={
+                'user': {
+                    'S': userName
+                },
+                'ak': {
+                    'S': ak
+                },
+                'notification_channel': {
+                    'S': notificationChannel
+                },
+                'notification_endpoint': {
+                    'S': notificationEndpoint
+                },
+                'delete_on': {
+                    'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (DAYS_FOR_DELETION * 24 * 60 * 60))
+                }
+            }
+        )
+        logger.info('Key {} marked for deletion'.format(ak))
+    except (Exception, ClientError) as ce:
+        logger.error('Failed to mark key {} for deletion. Reason: {}'.format(ak, ce))
+
+def notify_user(user, userName, accessKey, secretKey):
+    notificationChannel = user['attributes']['notification_channel']
+    logger.info('{} is selected as notification channel'.format(notificationChannel))
+    if notificationChannel == 'email':
+        if 'email' not in user['attributes']:
+            logger.error('Email is missing for user {}'.format(userName))
+        else:
+            send_email(user['attributes']['email'], userName, accessKey, secretKey, user['keys'][0]['ak'])
+
+            # Mark exisiting key to destory after X days
+            mark_key_for_destroy(userName, user['keys'][0]['ak'], 'email', user['attributes']['email'])
+    elif notificationChannel == 'slack':
+        if 'slack_url' not in user['attributes']:
+            logger.error('Slack incoming webhook url is missing for user {}'.format(userName))
+        else:
+            notify_via_slack(user['attributes']['slack_url'], userName, user['keys'][0]['ak'], accessKey, secretKey)
+
+            # Mark exisiting key to destory after X days
+            mark_key_for_destroy(userName, user['keys'][0]['ak'], 'slack', user['attributes']['slack_url'])
+    else:
+        logger.error('{} is not a supported notification channel'.format(notificationChannel))
 
 def create_user_key(userName, user):
     try:
@@ -122,56 +199,14 @@ def create_user_key(userName, user):
                     )
                     logger.info('New key pair generated for user {}'.format(userName))
 
-                    # Email keys to user
-                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['keys'][0]['ak'])
-
-                    # Mark exisiting key to destory after X days
-                    mark_key_for_destroy(userName, user['keys'][0]['ak'], user['attributes']['email'])
+                    # Notify user about new key pair
+                    notify_user(user, userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'])
     except (Exception, ClientError) as ce:
         logger.error('Failed to create new key pair. Reason: {}'.format(ce))
 
 def create_user_keys(users):
     with concurrent.futures.ThreadPoolExecutor(10) as executor:
         [executor.submit(create_user_key, user, users[user]) for user in users]
-
-def send_email(email, userName, accessKey, secretKey, existingAccessKey):
-    mailBody = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>A new access key pair has been generated for you. Please update the same wherever necessary.<br/><br/>Access Key: <strong>{}</strong><br/>Secret Access Key: <strong>{}</strong><br/><br/><strong>Note:</strong> Existing key pair <strong>{}</strong> will be deleted after {} days so please update the new key pair wherever required.<br/><br/>Thanks,<br/>Your Security Team</body></html>'.format('New Access Key Pair', userName, accessKey, secretKey, existingAccessKey, DAYS_FOR_DELETION)
-    try:
-        logger.info('Using {} as mail client'.format(MAIL_CLIENT))
-        if MAIL_CLIENT == 'ses':
-            import ses_mailer
-            ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
-        elif MAIL_CLIENT == 'mailgun':
-            import mailgun_mailer
-            mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
-        else:
-            logger.error('{}: Invalid mail client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
-    except (Exception, ClientError) as ce:
-        logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
-
-def mark_key_for_destroy(userName, ak, email):
-    try:
-        today = date.today()
-        dynamodb.put_item(
-            TableName=IAM_KEY_ROTATOR_TABLE,
-            Item={
-                'user': {
-                    'S': userName
-                },
-                'ak': {
-                    'S': ak
-                },
-                'email': {
-                    'S': email
-                },
-                'delete_on': {
-                    'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (DAYS_FOR_DELETION * 24 * 60 * 60))
-                }
-            }
-        )
-        logger.info('Key {} marked for deletion'.format(ak))
-    except (Exception, ClientError) as ce:
-        logger.error('Failed to mark key {} for deletion. Reason: {}'.format(ak, ce))
 
 def handler(event, context):
     if IAM_KEY_ROTATOR_TABLE is None:

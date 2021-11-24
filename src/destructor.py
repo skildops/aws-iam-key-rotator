@@ -40,22 +40,39 @@ def send_email(email, userName, existingAccessKey):
     except (Exception, ClientError) as ce:
         logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
 
+def notify_via_slack(slackUrl, userName, existingAccessKey):
+    try:
+        import slack
+        slack.notify(slackUrl, userName, existingAccessKey)
+    except (Exception, ClientError) as ce:
+        logger.error('Failed to notify user {} via slack. Reason: {}'.format(userName, ce))
+
+def notify_user(userName, accessKey, notificationChannel, notificationEndpoint):
+    logger.info('{} is selected as notification channel'.format(notificationChannel))
+    if notificationChannel == 'email':
+        send_email(notificationEndpoint, userName, accessKey)
+    elif notificationChannel == 'slack':
+        notify_via_slack(notificationEndpoint, userName, accessKey)
+    else:
+        logger.error('{} is not a supported notification channel'.format(notificationChannel))
+
 def destroy_user_key(rec):
     if rec['eventName'] == 'REMOVE':
         key = rec['dynamodb']['OldImage']
         userName = key['user']['S']
-        userEmail = key['email']['S']
         accessKey = key['ak']['S']
+        notificationChannel = key['notification_channel']['S']
+        notificationEndpoint = key['notification_endpoint']['S']
         try:
-            logger.info('Deleting access key {} assocaited with user {}'.format(accessKey, userName))
+            logger.info('Deleting access key {} associated with user {}'.format(accessKey, userName))
             iam.delete_access_key(
                 UserName=userName,
                 AccessKeyId=accessKey
             )
             logger.info('Access Key {} has been deleted'.format(accessKey))
 
-            # Send mail to user about key deletion
-            send_email(userEmail, userName, accessKey)
+            # Notify user about old key deletion
+            notify_user(userName, accessKey, notificationChannel, notificationEndpoint)
         except (Exception, ClientError) as ce:
             logger.error('Failed to delete access key {}. Reason: {}'.format(accessKey, ce))
             logger.info('Adding access key {} back to the database'.format(accessKey))
@@ -68,8 +85,11 @@ def destroy_user_key(rec):
                     'ak': {
                         'S': accessKey
                     },
-                    'email': {
-                        'S': userEmail
+                    'notification_channel': {
+                        'S': notificationChannel
+                    },
+                    'notification_endpoint': {
+                        'S': notificationEndpoint
                     },
                     'delete_on': {
                         'N': str(int(key['delete_on']['N']) + (RETRY_AFTER_MINS * 60))
