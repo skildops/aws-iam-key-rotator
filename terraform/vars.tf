@@ -126,7 +126,7 @@ variable "mail_client" {
 
 variable "mail_from" {
   type        = string
-  description = "Email address which should be used for sending mails. **Note:** Prior setup of SES is required to use this feature"
+  description = "Email address which should be used for sending mails. **Note:** Prior setup of mail client is required"
 }
 
 variable "mailgun_api_url" {
