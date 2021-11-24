@@ -36,7 +36,7 @@ This terraform module will deploy the following services:
 | key_creator_function_name | Name for lambda function responsible for creating new access key pair | `string` | `"iam-key-creator"` | no |
 | key_destructor_role_name | Name for IAM role to assocaite with key destructor lambda function | `string` | `"iam-key-destructor"` | no |
 | key_destructor_function_name | Name for lambda function responsible for deleting existing access key pair | `string` | `"iam-key-destructor"` | no |
-| cron_expression | [CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked | `string` | `"0 12 * * ? *"` | no |
+| cron_expression | [CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked to check if new key pair needs to be generated for an IAM user | `string` | `"0 12 * * ? *"` | no |
 | lambda_runtime | Lambda runtime to use for code execution for both creator and destructor function | `string` | `"python3.8"` | no |
 | function_memory_size | Amount of memory to allocate to both creator and destructor function | `number` | `128` | no |
 | function_timeout | Timeout to set for both creator and destructor function | `number` | `10` | no |
