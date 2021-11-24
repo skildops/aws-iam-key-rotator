@@ -31,10 +31,8 @@ logger.setLevel(logging.INFO)
 
 def prepare_instruction(keyUpdateInstructions):
     sortedKeys = sorted(keyUpdateInstructions)
-    preparedInstruction = ''
-    preparedInstruction = [preparedInstruction + keyUpdateInstructions[k] + ' ' for k in sortedKeys]
-
-    return preparedInstruction
+    preparedInstruction = [keyUpdateInstructions[k] for k in sortedKeys]
+    return ' '.join(preparedInstruction)
 
 def fetch_users_with_email(user):
     logger.info('Fetching tags for {}'.format(user))
@@ -121,36 +119,41 @@ def fetch_user_details():
     return users
 
 def send_email(email, userName, accessKey, secretKey, instruction, existingAccessKey):
-    mailBody = '''
-    <!DOCTYPE html>
-    <html style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-        <head>
-            <meta name="viewport" content="width=device-width" />
-            <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
-            <title>{}</title>
-
-            <style type="text/css">
-                body {
-                    -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; line-height: 1.6em;
-                }
-            </style>
-        </head>
-        <body>
-            <p>Hey &#x1F44B; {},</p>
-            <p>A new access key pair has been generated for you. Please update the same wherever necessary.</p>
-            <p>
-                Access Key: <b>{}</b>
-                <br/>
-                Secret Access Key: <b>{}</b>
-                <br/>
-                Instruction: {}
-            </p>
-            <p><b>Note:</b> Existing key pair <b>{}</b> will be deleted after <b>{}</b> days so please update the key pair wherever required.</p>
-            <p>Thanks,<br/>
-            Your Security Team</p>
-        </body>
-    </html>'''.format('New Access Key Pair', userName, accessKey, secretKey, instruction, existingAccessKey, DAYS_FOR_DELETION)
     try:
+        mailBody = '''
+        <!DOCTYPE html>
+        <html style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
+            <head>
+                <meta name="viewport" content="width=device-width" />
+                <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+                <title>{}</title>
+
+                <style type="text/css">
+                    body {{
+                        -webkit-font-smoothing: antialiased;
+                        -webkit-text-size-adjust: none;
+                        width: 100% !important;
+                        height: 100%;
+                        line-height: 1.6em;
+                    }}
+                </style>
+            </head>
+            <body>
+                <p>Hey &#x1F44B; {},</p>
+                <p>A new access key pair has been generated for you. Please update the same wherever necessary.</p>
+                <p>
+                    Access Key: <b>{}</b>
+                    <br/>
+                    Secret Access Key: <b>{}</b>
+                    <br/>
+                    Instruction: <b>{}</b>
+                </p>
+                <p><b>Note:</b> Existing key pair <b>{}</b> will be deleted after <b>{}</b> days so please update the key pair wherever required.</p>
+                <p>Thanks,<br/>
+                Your Security Team</p>
+            </body>
+        </html>'''.format('New Access Key Pair', userName, accessKey, secretKey, instruction, existingAccessKey, DAYS_FOR_DELETION)
+
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'ses':
             import ses_mailer
