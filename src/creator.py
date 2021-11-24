@@ -106,7 +106,7 @@ def fetch_user_details():
                 users.pop(userName)
             else:
                 users[userName]['attributes'] = userAttributes
-        logger.info('User with email tag: {}'.format([user for user in users]))
+        logger.info('User(s) with email tag: {}'.format([user for user in users]))
 
         logger.info('Fetching keys for users individually')
         with concurrent.futures.ThreadPoolExecutor(10) as executor:
@@ -119,36 +119,6 @@ def fetch_user_details():
         logger.error(ce)
 
     return users
-
-def create_user_key(userName, user):
-    try:
-        if len(user['keys']) == 0:
-            logger.info('Skipping key creation for {} because no existing key found'.format(userName))
-        elif len(user['keys']) == 2:
-            logger.warn('Skipping key creation for {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
-        else:
-            for k in user['keys']:
-                rotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ACCESS_KEY_AGE
-                if k['ak_age_days'] <= int(rotationAge):
-                    logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], rotationAge))
-                else:
-                    logger.info('Creating new access key for {}'.format(userName))
-                    resp = iam.create_access_key(
-                        UserName=userName
-                    )
-                    logger.info('New key pair generated for user {}'.format(userName))
-
-                    # Email keys to user
-                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'])
-
-                    # Mark exisiting key to destory after X days
-                    mark_key_for_destroy(userName, user['keys'][0]['ak'], user['attributes']['email'])
-    except (Exception, ClientError) as ce:
-        logger.error('Failed to create new key pair. Reason: {}'.format(ce))
-
-def create_user_keys(users):
-    with concurrent.futures.ThreadPoolExecutor(10) as executor:
-        [executor.submit(create_user_key, user, users[user]) for user in users]
 
 def send_email(email, userName, accessKey, secretKey, instruction, existingAccessKey):
     mailBody = '''
@@ -216,6 +186,36 @@ def mark_key_for_destroy(userName, ak, email):
         logger.info('Key {} marked for deletion'.format(ak))
     except (Exception, ClientError) as ce:
         logger.error('Failed to mark key {} for deletion. Reason: {}'.format(ak, ce))
+
+def create_user_key(userName, user):
+    try:
+        if len(user['keys']) == 0:
+            logger.info('Skipping key creation for {} because no existing key found'.format(userName))
+        elif len(user['keys']) == 2:
+            logger.warn('Skipping key creation for {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
+        else:
+            for k in user['keys']:
+                rotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ACCESS_KEY_AGE
+                if k['ak_age_days'] <= int(rotationAge):
+                    logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], rotationAge))
+                else:
+                    logger.info('Creating new access key for {}'.format(userName))
+                    resp = iam.create_access_key(
+                        UserName=userName
+                    )
+                    logger.info('New key pair generated for user {}'.format(userName))
+
+                    # Email keys to user
+                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'])
+
+                    # Mark exisiting key to destory after X days
+                    mark_key_for_destroy(userName, user['keys'][0]['ak'], user['attributes']['email'])
+    except (Exception, ClientError) as ce:
+        logger.error('Failed to create new key pair. Reason: {}'.format(ce))
+
+def create_user_keys(users):
+    with concurrent.futures.ThreadPoolExecutor(10) as executor:
+        [executor.submit(create_user_key, user, users[user]) for user in users]
 
 def handler(event, context):
     if IAM_KEY_ROTATOR_TABLE is None:
