@@ -79,7 +79,7 @@ variable "key_destructor_function_name" {
 variable "cron_expression" {
   type        = string
   default     = "0 12 * * ? *"
-  description = "[CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked"
+  description = "[CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked to check if new key pair needs to be generated for an IAM user"
 }
 
 variable "lambda_runtime" {
@@ -126,7 +126,7 @@ variable "mail_client" {
 
 variable "mail_from" {
   type        = string
-  description = "Email address which should be used for sending mails. **Note:** Prior setup of SES is required to use this feature"
+  description = "Email address which should be used for sending mails. **Note:** Prior setup of mail client is required"
 }
 
 variable "mailgun_api_url" {

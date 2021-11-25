@@ -162,11 +162,13 @@ resource "aws_ssm_parameter" "mailgun" {
   type  = "SecureString"
   tags  = var.tags
 }
+
 resource "aws_lambda_function" "iam_key_creator" {
   # checkov:skip=CKV_AWS_50: Enabling X-Ray tracing depends on user
   # checkov:skip=CKV_AWS_115: Setting reserved concurrent execution depends on user
   # checkov:skip=CKV_AWS_116: DLQ not required
   # checkov:skip=CKV_AWS_117: VPC deployment not required
+  # checkov:skip=CKV_AWS_173: By default environment variables are encrypted at rest
   function_name    = var.key_creator_function_name
   description      = "Create new access key pair for IAM user"
   role             = aws_iam_role.iam_key_creator.arn
@@ -278,6 +280,7 @@ resource "aws_lambda_function" "iam_key_destructor" {
   # checkov:skip=CKV_AWS_115: Setting reserved concurrent execution depends on user
   # checkov:skip=CKV_AWS_116: DLQ not required
   # checkov:skip=CKV_AWS_117: VPC deployment not required
+  # checkov:skip=CKV_AWS_173: By default environment variables are encrypted at rest
   function_name    = var.key_destructor_function_name
   description      = "Delete existing access key pair for IAM user"
   role             = aws_iam_role.iam_key_destructor.arn

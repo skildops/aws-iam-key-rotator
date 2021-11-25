@@ -36,7 +36,7 @@ This terraform module will deploy the following services:
 | key_creator_function_name | Name for lambda function responsible for creating new access key pair | `string` | `"iam-key-creator"` | no |
 | key_destructor_role_name | Name for IAM role to assocaite with key destructor lambda function | `string` | `"iam-key-destructor"` | no |
 | key_destructor_function_name | Name for lambda function responsible for deleting existing access key pair | `string` | `"iam-key-destructor"` | no |
-| cron_expression | [CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked | `string` | `"0 12 * * ? *"` | no |
+| cron_expression | [CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked to check if new key pair needs to be generated for an IAM user | `string` | `"0 12 * * ? *"` | no |
 | lambda_runtime | Lambda runtime to use for code execution for both creator and destructor function | `string` | `"python3.8"` | no |
 | function_memory_size | Amount of memory to allocate to both creator and destructor function | `number` | `128` | no |
 | function_timeout | Timeout to set for both creator and destructor function | `number` | `10` | no |
@@ -44,7 +44,7 @@ This terraform module will deploy the following services:
 | xray_tracing_mode | Whether to sample and trace a subset of incoming requests with AWS X-Ray. **Possible values:** `PassThrough` and `Active` | `string` | `"PassThrough"` | no |
 | tags | Key value pair to assign to resources | `map(string)` | `{}` | no |
 | mail_client | Mail client to use. **Supported Clients:** ses and mailgun | `string` | `"ses"` | no |
-| mail_from | Email address which should be used for sending mails. **Note:** Prior setup of SES is required to use this feature | `string` | n/a | yes |
+| mail_from | Email address which should be used for sending mails. **Note:** Prior setup of mail client is required | `string` | n/a | yes |
 | mailgun_api_url | Mailgun API url for sending email. **Note:** Required if you want to use Mailgun as mail client | `string` | `null` | no |
 | mailgun_api_key | API key for authenticating requests to Mailgun API. **Note:** Required if you want to use Mailgun as mail client | `string` | `""` | no |
 
