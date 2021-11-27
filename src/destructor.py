@@ -26,15 +26,20 @@ logger = logging.getLogger('destructor')
 logger.setLevel(logging.INFO)
 
 def send_email(email, userName, existingAccessKey):
-    mailBody = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>An existing access key pair associated to your username has been deleted because it reached End-Of-Life. <br/><br/>Access Key: <strong>{}</strong><br/><br/>Thanks,<br/>Your Security Team</body></html>'.format('Old Access Key Pair Deleted', userName, existingAccessKey)
+    mailSubject = 'Old Access Key Pair Deleted'
+    mailBodyPlain = 'Hey {},\nAn existing access key pair associated to your username has been deleted because it reached End-Of-Life.\n\nAccess Key: {}\n\nThanks,\nYour Security Team'.format(mailSubject, userName, existingAccessKey)
+    mailBodyHtml = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>An existing access key pair associated to your username has been deleted because it reached End-Of-Life. <br/><br/>Access Key: <strong>{}</strong><br/><br/>Thanks,<br/>Your Security Team</body></html>'.format(mailSubject, userName, existingAccessKey)
     try:
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
-        if MAIL_CLIENT == 'ses':
+        if MAIL_CLIENT == 'smtp':
+            import smtp_mailer
+            smtp_mailer.send_email(email, userName, mailSubject, MAIL_FROM, mailBodyPlain, mailBodyHtml)
+        elif MAIL_CLIENT == 'ses':
             import ses_mailer
-            ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+            ses_mailer.send_email(email, userName, mailSubject, MAIL_FROM, mailBodyPlain, mailBodyHtml)
         elif MAIL_CLIENT == 'mailgun':
             import mailgun_mailer
-            mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+            mailgun_mailer.send_email(email, userName, mailSubject, MAIL_FROM, mailBodyPlain, mailBodyHtml)
         else:
             logger.error('{}: Invalid mail client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
     except (Exception, ClientError) as ce:

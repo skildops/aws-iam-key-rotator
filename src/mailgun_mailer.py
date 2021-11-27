@@ -14,27 +14,28 @@ MAILGUN_API_KEY_NAME = os.environ.get('MAILGUN_API_KEY_NAME', None)
 logger = logging.getLogger('mailgun-mailer')
 logger.setLevel(logging.INFO)
 
-def send_email(email, userName, mailFrom, mailBody):
+def send_email(mailTo, userName, mailSubject, mailFrom, mailBodyPlain, mailBodyHtml):
     if MAILGUN_API_URL is None or MAILGUN_API_KEY_NAME is None:
         logger.error('Both MAILGUN_API_URL and MAILGUN_API_KEY_NAME is required for sending mail via Mailgun. Current values: MAILGUN_API_URL = {} and MAILGUN_API_KEY_NAME = {}'.format(MAILGUN_API_URL, MAILGUN_API_KEY_NAME))
         return False
 
-    logger.info('Fetching API key from SSM')
+    logger.info('Fetching Mailgun API key from SSM')
     resp = ssm.get_parameter(
         Name=MAILGUN_API_KEY_NAME,
         WithDecryption=True
     )
     apiKey = resp['Parameter']['Value']
 
-    logger.info('Sending mail to {} ({}) via Mailgun'.format(userName, email))
+    logger.info('Sending mail to {} ({}) via Mailgun'.format(userName, mailTo))
     resp = requests.post(MAILGUN_API_URL, auth=("api", apiKey),
         data={"from": mailFrom,
-              "to": [email],
-              "subject": "New Access Key Pair",
-              "html": mailBody})
+              "to": [mailTo],
+              "subject": mailSubject,
+              "text": mailBodyPlain,
+              "html": mailBodyHtml})
     respBody = resp.json()
 
     if 'message' in respBody and respBody['message'] == 'Queued. Thank you.':
-        logger.info('Mail sent to {} ({}) via Mailgun'.format(userName, email))
+        logger.info('Mail sent to {} ({}) via Mailgun'.format(userName, mailTo))
     else:
-        logger.error('Mailgun was unable to send mail to {} ({}). Reason: {}'.format(userName, email, respBody['message']))
+        logger.error('Mailgun was unable to send mail to {} ({}). Reason: {}'.format(userName, mailTo, respBody['message']))

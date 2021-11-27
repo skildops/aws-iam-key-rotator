@@ -120,7 +120,9 @@ def fetch_user_details():
 
 def send_email(email, userName, accessKey, secretKey, instruction, existingAccessKey):
     try:
-        mailBody = '''
+        mailSubject = 'New Access Key Pair'
+        mailBodyPlain = 'Hey {},\n\nA new access key pair has been generated for you. Please update the same wherever necessary.\n\nAccess Key: {}\nSecret Access Key: {}\nInstruction: {}\n\nNote: Existing key pair {} will be deleted after {} days so please update the key pair wherever required.\n\nThanks,\nYour Security Team'.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, DELETE_AFTER_DAYS)
+        mailBodyHtml = '''
         <!DOCTYPE html>
         <html style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
             <head>
@@ -152,15 +154,18 @@ def send_email(email, userName, accessKey, secretKey, instruction, existingAcces
                 <p>Thanks,<br/>
                 Your Security Team</p>
             </body>
-        </html>'''.format('New Access Key Pair', userName, accessKey, secretKey, instruction, existingAccessKey, DELETE_AFTER_DAYS)
+        </html>'''.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, DELETE_AFTER_DAYS)
 
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
-        if MAIL_CLIENT == 'ses':
+        if MAIL_CLIENT == 'smtp':
+            import smtp_mailer
+            smtp_mailer.send_email(email, userName, mailSubject, MAIL_FROM, mailBodyPlain, mailBodyHtml)
+        elif MAIL_CLIENT == 'ses':
             import ses_mailer
-            ses_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+            ses_mailer.send_email(email, userName, mailSubject, MAIL_FROM, mailBodyPlain, mailBodyHtml)
         elif MAIL_CLIENT == 'mailgun':
             import mailgun_mailer
-            mailgun_mailer.send_email(email, userName, MAIL_FROM, mailBody)
+            mailgun_mailer.send_email(email, userName, mailSubject, MAIL_FROM, mailBodyPlain, mailBodyHtml)
         else:
             logger.error('{}: Invalid mail client. Supported mail clients: AWS SES and Mailgun'.format(MAIL_CLIENT))
     except (Exception, ClientError) as ce:
