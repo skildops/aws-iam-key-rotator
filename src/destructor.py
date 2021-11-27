@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 # Table name which holds existing access key pair details to be deleted
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 
-# In case lambda fails to delete the key, how long should it wait before next try
+# In case lambda fails to delete the old key, how long should it wait before the next try
 RETRY_AFTER_MINS = os.environ.get('RETRY_AFTER_MINS', 5)
 
 # Mail client to use for sending new key creation or existing key deletion mail

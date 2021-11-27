@@ -118,6 +118,24 @@ variable "tags" {
   description = "Key value pair to assign to resources"
 }
 
+variable "access_key_age" {
+  type        = number
+  default     = 85
+  description = "Days after which a new access key pair should be generated"
+}
+
+variable "delete_after_days" {
+  type        = number
+  default     = 5
+  description = "No. of days to wait for deleting existing key pair after a new key pair is generated"
+}
+
+variable "retry_after_mins" {
+  type        = number
+  default     = 5
+  description = "In case lambda fails to delete the old key, how long should it wait before the next try"
+}
+
 variable "mail_client" {
   type        = string
   default     = "ses"

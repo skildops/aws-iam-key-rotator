@@ -13,8 +13,8 @@ IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 # Days after which a new access key pair should be generated
 ACCESS_KEY_AGE = os.environ.get('ACCESS_KEY_AGE', 85)
 
-# No. of days to wait before existing key pair is deleted once a new key pair is generated
-DAYS_FOR_DELETION = os.environ.get('DAYS_FOR_DELETION', 5)
+# No. of days to wait for deleting existing key pair after a new key pair is generated
+DELETE_AFTER_DAYS = os.environ.get('DELETE_AFTER_DAYS', 5)
 
 # Mail client to use for sending new key creation or existing key deletion mail
 MAIL_CLIENT = os.environ.get('MAIL_CLIENT', 'ses')
@@ -152,7 +152,7 @@ def send_email(email, userName, accessKey, secretKey, instruction, existingAcces
                 <p>Thanks,<br/>
                 Your Security Team</p>
             </body>
-        </html>'''.format('New Access Key Pair', userName, accessKey, secretKey, instruction, existingAccessKey, DAYS_FOR_DELETION)
+        </html>'''.format('New Access Key Pair', userName, accessKey, secretKey, instruction, existingAccessKey, DELETE_AFTER_DAYS)
 
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'ses':
@@ -182,7 +182,7 @@ def mark_key_for_destroy(userName, ak, email):
                     'S': email
                 },
                 'delete_on': {
-                    'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (DAYS_FOR_DELETION * 24 * 60 * 60))
+                    'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (DELETE_AFTER_DAYS * 24 * 60 * 60))
                 }
             }
         )

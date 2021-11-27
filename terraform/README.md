@@ -43,6 +43,9 @@ This terraform module will deploy the following services:
 | reserved_concurrent_executions | Amount of reserved concurrent executions for this lambda function. A value of `0` disables lambda from being triggered and `-1` removes any concurrency limitations | `number` | `-1` | no |
 | xray_tracing_mode | Whether to sample and trace a subset of incoming requests with AWS X-Ray. **Possible values:** `PassThrough` and `Active` | `string` | `"PassThrough"` | no |
 | tags | Key value pair to assign to resources | `map(string)` | `{}` | no |
+| access_key_age | Days after which a new access key pair should be generated | `number` | `85` | no |
+| delete_after_days | No. of days to wait for deleting existing key pair after a new key pair is generated | `number` | `5` | no |
+| retry_after_mins | In case lambda fails to delete the old key, how long should it wait before the next try | `number` | `5` | no |
 | mail_client | Mail client to use. **Supported Clients:** ses and mailgun | `string` | `"ses"` | no |
 | mail_from | Email address which should be used for sending mails. **Note:** Prior setup of mail client is required | `string` | n/a | yes |
 | mailgun_api_url | Mailgun API url for sending email. **Note:** Required if you want to use Mailgun as mail client | `string` | `null` | no |

@@ -190,6 +190,8 @@ resource "aws_lambda_function" "iam_key_creator" {
   environment {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
+      ACCESS_KEY_AGE        = var.access_key_age
+      DELETE_AFTER_DAYS     = var.delete_after_days
       MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
       MAILGUN_API_URL       = var.mailgun_api_url
@@ -302,6 +304,7 @@ resource "aws_lambda_function" "iam_key_destructor" {
   environment {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
+      RETRY_AFTER_MINS      = var.retry_after_mins
       MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
       MAILGUN_API_URL       = var.mailgun_api_url
