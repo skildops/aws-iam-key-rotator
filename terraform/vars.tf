@@ -150,13 +150,13 @@ variable "mail_from" {
 variable "smtp_protocol" {
   type        = string
   default     = null
-  description = "Security protocol to use for SMTP connection. **Supported values:** ssl and tls"
+  description = "Security protocol to use for SMTP connection. **Supported values:** ssl and tls. **Note:** Required if mail client is set to smtp"
 }
 
 variable "smtp_port" {
   type        = number
   default     = null
-  description = "Secure port number to use for SMTP connection"
+  description = "Secure port number to use for SMTP connection. **Note:** Required if mail client is set to smtp"
 }
 
 variable "smtp_server" {
@@ -174,11 +174,11 @@ variable "smtp_password" {
 variable "mailgun_api_url" {
   type        = string
   default     = null
-  description = "Mailgun API url for sending email. **Note:** Required if you want to use Mailgun as mail client"
+  description = "Mailgun API url for sending email. **Note:** Required if mail client is set to mailgun"
 }
 
 variable "mailgun_api_key" {
   type        = string
   default     = null
-  description = "API key for authenticating requests to Mailgun API. **Note:** Required if you want to use Mailgun as mail client"
+  description = "API key for authenticating requests to Mailgun API. **Note:** Required if mail client is set to mailgun"
 }
