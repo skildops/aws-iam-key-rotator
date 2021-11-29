@@ -194,8 +194,12 @@ resource "aws_lambda_function" "iam_key_creator" {
       DELETE_AFTER_DAYS     = var.delete_after_days
       MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
+      SMTP_PROTOCOL         = var.smtp_protocol
+      SMTP_PORT             = var.smtp_port
+      SMTP_SERVER           = var.smtp_server
+      SMTP_PASSWORD         = var.smtp_password
       MAILGUN_API_URL       = var.mailgun_api_url
-      MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
+      MAILGUN_API_KEY_NAME  = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.*.name) : null
     }
   }
 
@@ -307,8 +311,12 @@ resource "aws_lambda_function" "iam_key_destructor" {
       RETRY_AFTER_MINS      = var.retry_after_mins
       MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
+      SMTP_PROTOCOL         = var.smtp_protocol
+      SMTP_PORT             = var.smtp_port
+      SMTP_SERVER           = var.smtp_server
+      SMTP_PASSWORD         = var.smtp_password
       MAILGUN_API_URL       = var.mailgun_api_url
-      MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
+      MAILGUN_API_KEY_NAME  = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.*.name) : null
     }
   }
 

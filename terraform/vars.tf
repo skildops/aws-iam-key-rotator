@@ -139,12 +139,36 @@ variable "retry_after_mins" {
 variable "mail_client" {
   type        = string
   default     = "ses"
-  description = "Mail client to use. **Supported Clients:** ses and mailgun"
+  description = "Mail client to use. **Supported Clients:** smtp, ses and mailgun"
 }
 
 variable "mail_from" {
   type        = string
   description = "Email address which should be used for sending mails. **Note:** Prior setup of mail client is required"
+}
+
+variable "smtp_protocol" {
+  type        = string
+  default     = null
+  description = "Security protocol to use for SMTP connection. **Supported values:** ssl and tls"
+}
+
+variable "smtp_port" {
+  type        = number
+  default     = null
+  description = "Secure port number to use for SMTP connection"
+}
+
+variable "smtp_server" {
+  type        = string
+  default     = null
+  description = "Host name of SMTP server. **Note:** Required if mail client is set to smtp"
+}
+
+variable "smtp_password" {
+  type        = string
+  default     = null
+  description = "Password to use with `mail_from` address for SMTP authentication. **Note:** Required if mail client is set to smtp"
 }
 
 variable "mailgun_api_url" {
@@ -155,6 +179,6 @@ variable "mailgun_api_url" {
 
 variable "mailgun_api_key" {
   type        = string
-  default     = ""
+  default     = null
   description = "API key for authenticating requests to Mailgun API. **Note:** Required if you want to use Mailgun as mail client"
 }
