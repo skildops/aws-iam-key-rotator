@@ -118,16 +118,16 @@ variable "tags" {
   description = "Key value pair to assign to resources"
 }
 
-variable "access_key_age" {
+variable "rotate_after_days" {
   type        = number
   default     = 85
-  description = "Days after which a new access key pair should be generated"
+  description = "Days after which a new access key pair should be generated. **Note:** If `IKR:ROTATE_AFTER_DAYS` tag is set for the IAM user, this is ignored"
 }
 
 variable "delete_after_days" {
   type        = number
   default     = 5
-  description = "No. of days to wait for deleting existing key pair after a new key pair is generated"
+  description = "No. of days to wait for deleting existing key pair after a new key pair is generated. **Note:** If `IKR:DELETE_AFTER_DAYS` tag is set for the IAM user, this is ignored"
 }
 
 variable "retry_after_mins" {

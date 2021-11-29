@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 
 # Days after which a new access key pair should be generated
-ACCESS_KEY_AGE = os.environ.get('ACCESS_KEY_AGE', 85)
+ROTATE_AFTER_DAYS = os.environ.get('ROTATE_AFTER_DAYS', 85)
 
 # No. of days to wait for deleting existing key pair after a new key pair is generated
 DELETE_AFTER_DAYS = os.environ.get('DELETE_AFTER_DAYS', 5)
@@ -48,6 +48,9 @@ def fetch_users_with_email(user):
 
         if t['Key'].lower() == 'ikr:rotate_after_days':
             userAttributes['rotate_after'] = t['Value']
+
+        if t['Key'].lower() == 'ikr:delete_after_days':
+            userAttributes['delete_after'] = t['Value']
 
         if t['Key'].lower().startswith('ikr:instruction_'):
             keyUpdateInstructions[int(t['Key'].split('_')[1])] = t['Value']
@@ -118,10 +121,10 @@ def fetch_user_details():
 
     return users
 
-def send_email(email, userName, accessKey, secretKey, instruction, existingAccessKey):
+def send_email(email, userName, accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge):
     try:
         mailSubject = 'New Access Key Pair'
-        mailBodyPlain = 'Hey {},\n\nA new access key pair has been generated for you. Please update the same wherever necessary.\n\nAccess Key: {}\nSecret Access Key: {}\nInstruction: {}\n\nNote: Existing key pair {} will be deleted after {} days so please update the key pair wherever required.\n\nThanks,\nYour Security Team'.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, DELETE_AFTER_DAYS)
+        mailBodyPlain = 'Hey {},\n\nA new access key pair has been generated for you. Please update the same wherever necessary.\n\nAccess Key: {}\nSecret Access Key: {}\nInstruction: {}\n\nNote: Existing key pair {} will be deleted after {} days so please update the key pair wherever required.\n\nThanks,\nYour Security Team'.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge)
         mailBodyHtml = '''
         <!DOCTYPE html>
         <html style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
@@ -154,7 +157,7 @@ def send_email(email, userName, accessKey, secretKey, instruction, existingAcces
                 <p>Thanks,<br/>
                 Your Security Team</p>
             </body>
-        </html>'''.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, DELETE_AFTER_DAYS)
+        </html>'''.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge)
 
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'smtp':
@@ -171,7 +174,7 @@ def send_email(email, userName, accessKey, secretKey, instruction, existingAcces
     except (Exception, ClientError) as ce:
         logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
 
-def mark_key_for_destroy(userName, ak, email):
+def mark_key_for_destroy(userName, ak, existingKeyDeleteAge, email):
     try:
         today = date.today()
         dynamodb.put_item(
@@ -187,7 +190,7 @@ def mark_key_for_destroy(userName, ak, email):
                     'S': email
                 },
                 'delete_on': {
-                    'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (DELETE_AFTER_DAYS * 24 * 60 * 60))
+                    'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (existingKeyDeleteAge * 24 * 60 * 60))
                 }
             }
         )
@@ -203,9 +206,9 @@ def create_user_key(userName, user):
             logger.warn('Skipping key creation for {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
         else:
             for k in user['keys']:
-                rotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ACCESS_KEY_AGE
-                if k['ak_age_days'] <= int(rotationAge):
-                    logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], rotationAge))
+                keyRotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ROTATE_AFTER_DAYS
+                if k['ak_age_days'] <= int(keyRotationAge):
+                    logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], keyRotationAge))
                 else:
                     logger.info('Creating new access key for {}'.format(userName))
                     resp = iam.create_access_key(
@@ -214,10 +217,11 @@ def create_user_key(userName, user):
                     logger.info('New key pair generated for user {}'.format(userName))
 
                     # Email keys to user
-                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'])
+                    existingKeyDeleteAge = user['attributes']['delete_after'] if 'delete_after' in user['attributes'] else DELETE_AFTER_DAYS
+                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'], int(existingKeyDeleteAge))
 
                     # Mark exisiting key to destory after X days
-                    mark_key_for_destroy(userName, user['keys'][0]['ak'], user['attributes']['email'])
+                    mark_key_for_destroy(userName, user['keys'][0]['ak'], int(existingKeyDeleteAge), user['attributes']['email'])
     except (Exception, ClientError) as ce:
         logger.error('Failed to create new key pair. Reason: {}'.format(ce))
 

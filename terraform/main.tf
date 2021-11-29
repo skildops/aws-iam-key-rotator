@@ -190,7 +190,7 @@ resource "aws_lambda_function" "iam_key_creator" {
   environment {
     variables = {
       IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
-      ACCESS_KEY_AGE        = var.access_key_age
+      ROTATE_AFTER_DAYS     = var.rotate_after_days
       DELETE_AFTER_DAYS     = var.delete_after_days
       MAIL_CLIENT           = var.mail_client
       MAIL_FROM             = var.mail_from
