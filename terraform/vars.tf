@@ -118,10 +118,28 @@ variable "tags" {
   description = "Key value pair to assign to resources"
 }
 
+variable "rotate_after_days" {
+  type        = number
+  default     = 85
+  description = "Days after which a new access key pair should be generated. **Note:** If `IKR:ROTATE_AFTER_DAYS` tag is set for the IAM user, this is ignored"
+}
+
+variable "delete_after_days" {
+  type        = number
+  default     = 5
+  description = "No. of days to wait for deleting existing key pair after a new key pair is generated. **Note:** If `IKR:DELETE_AFTER_DAYS` tag is set for the IAM user, this is ignored"
+}
+
+variable "retry_after_mins" {
+  type        = number
+  default     = 5
+  description = "In case lambda fails to delete the old key, how long should it wait before the next try"
+}
+
 variable "mail_client" {
   type        = string
   default     = "ses"
-  description = "Mail client to use. **Supported Clients:** ses and mailgun"
+  description = "Mail client to use. **Supported Clients:** smtp, ses and mailgun"
 }
 
 variable "mail_from" {
@@ -129,14 +147,38 @@ variable "mail_from" {
   description = "Email address which should be used for sending mails. **Note:** Prior setup of mail client is required"
 }
 
+variable "smtp_protocol" {
+  type        = string
+  default     = null
+  description = "Security protocol to use for SMTP connection. **Supported values:** ssl and tls. **Note:** Required if mail client is set to smtp"
+}
+
+variable "smtp_port" {
+  type        = number
+  default     = null
+  description = "Secure port number to use for SMTP connection. **Note:** Required if mail client is set to smtp"
+}
+
+variable "smtp_server" {
+  type        = string
+  default     = null
+  description = "Host name of SMTP server. **Note:** Required if mail client is set to smtp"
+}
+
+variable "smtp_password" {
+  type        = string
+  default     = null
+  description = "Password to use with `mail_from` address for SMTP authentication. **Note:** Required if mail client is set to smtp"
+}
+
 variable "mailgun_api_url" {
   type        = string
   default     = null
-  description = "Mailgun API url for sending email. **Note:** Required if you want to use Mailgun as mail client"
+  description = "Mailgun API url for sending email. **Note:** Required if mail client is set to mailgun"
 }
 
 variable "mailgun_api_key" {
   type        = string
-  default     = ""
-  description = "API key for authenticating requests to Mailgun API. **Note:** Required if you want to use Mailgun as mail client"
+  default     = null
+  description = "API key for authenticating requests to Mailgun API. **Note:** Required if mail client is set to mailgun"
 }

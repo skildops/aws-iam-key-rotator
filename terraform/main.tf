@@ -156,9 +156,17 @@ resource "aws_lambda_permission" "iam_key_creator" {
 }
 
 resource "aws_ssm_parameter" "mailgun" {
-  count = var.mailgun_api_key == "" ? 0 : 1
+  count = var.mail_client == "mailgun" ? 1 : 0
   name  = "/iakr/secret/mailgun"
   value = var.mailgun_api_key
+  type  = "SecureString"
+  tags  = var.tags
+}
+
+resource "aws_ssm_parameter" "smtp_password" {
+  count = var.mail_client == "smtp" ? 1 : 0
+  name  = "/iakr/secret/smtp"
+  value = var.smtp_password
   type  = "SecureString"
   tags  = var.tags
 }
@@ -189,11 +197,17 @@ resource "aws_lambda_function" "iam_key_creator" {
 
   environment {
     variables = {
-      IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
-      MAIL_CLIENT           = var.mail_client
-      MAIL_FROM             = var.mail_from
-      MAILGUN_API_URL       = var.mailgun_api_url
-      MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
+      IAM_KEY_ROTATOR_TABLE   = aws_dynamodb_table.iam_key_rotator.name
+      ROTATE_AFTER_DAYS       = var.rotate_after_days
+      DELETE_AFTER_DAYS       = var.delete_after_days
+      MAIL_CLIENT             = var.mail_client
+      MAIL_FROM               = var.mail_from
+      SMTP_PROTOCOL           = var.smtp_protocol
+      SMTP_PORT               = var.smtp_port
+      SMTP_SERVER             = var.smtp_server
+      SMTP_PASSWORD_PARAMETER = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.*.name) : null
+      MAILGUN_API_URL         = var.mailgun_api_url
+      MAILGUN_API_KEY_NAME    = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.*.name) : null
     }
   }
 
@@ -301,11 +315,16 @@ resource "aws_lambda_function" "iam_key_destructor" {
 
   environment {
     variables = {
-      IAM_KEY_ROTATOR_TABLE = aws_dynamodb_table.iam_key_rotator.name
-      MAIL_CLIENT           = var.mail_client
-      MAIL_FROM             = var.mail_from
-      MAILGUN_API_URL       = var.mailgun_api_url
-      MAILGUN_API_KEY_NAME  = var.mailgun_api_key == "" ? null : join(",", aws_ssm_parameter.mailgun.*.name)
+      IAM_KEY_ROTATOR_TABLE   = aws_dynamodb_table.iam_key_rotator.name
+      RETRY_AFTER_MINS        = var.retry_after_mins
+      MAIL_CLIENT             = var.mail_client
+      MAIL_FROM               = var.mail_from
+      SMTP_PROTOCOL           = var.smtp_protocol
+      SMTP_PORT               = var.smtp_port
+      SMTP_SERVER             = var.smtp_server
+      SMTP_PASSWORD_PARAMETER = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.*.name) : null
+      MAILGUN_API_URL         = var.mailgun_api_url
+      MAILGUN_API_KEY_NAME    = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.*.name) : null
     }
   }
 
