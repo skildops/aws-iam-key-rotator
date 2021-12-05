@@ -1,6 +1,6 @@
 ## aws-iam-key-rotator
 
-![License](https://img.shields.io/github/license/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/codeql/main?label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/paliwalvimal/aws-iam-key-rotator?style=for-the-badge)
+![License](https://img.shields.io/github/license/skildops/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/workflow/status/skildops/aws-iam-key-rotator/codeql/main?label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/skildops/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/skildops/aws-iam-key-rotator?style=for-the-badge)
 
 This tool is responsible for generating a new IAM access key pair every X days and mails it to the user via any of the supported mailer. It will also delete the existing key pair after a few days of new key generation giving the user window to update the new key wherever required.
 
@@ -14,10 +14,12 @@ This tool is responsible for generating a new IAM access key pair every X days a
 - SES
 - CloudWatch Event
 - IAM
+- SSM Parameter
 
-### Supported Mailers:
+### Supported Mail Clients:
 - AWS SES
 - Mailgun
+- SMTP
 
 ### Process:
 ![aws-iam-key-rotator](iam-key-rotator.jpeg "AWS IAM Key Rotator")
@@ -37,3 +39,11 @@ This tool is responsible for generating a new IAM access key pair every X days a
     - `IKR:ROTATE_AFTER_DAYS`: After how many days new access key should be generated. **Note:** If you want to control key generation period per user add this tag to the user else environment variable `ROTATE_AFTER_DAYS` will be used
     - `IKR:DELETE_AFTER_DAYS`: After how many days existing access key should be deleted. **Note:** If you want to control key deletion period per user add this tag to the user else environment variable `DELETE_AFTER_DAYS` will be used
     - `IKR:INSTRUCTION_0`: Add help instruction related to updating access key. This instruction will be sent to IAM user whenever a new key pair is generated. **Note:** As AWS restricts [tag value](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html#tag-conventions) to 256 characters you can use multiple instruction tags by increasing the number (`IKR:INSTRUCTION_0`, `IKR:INSTRUCTION_1` , `IKR:INSTRUCTION_2` and so on). All the instruction tags value will be combined and sent as a single string to the user.
+    - `IKR:STORAGE_APP`: Automatically stores newly generated key pair in the supported app. Supported apps with their respective value:
+      - Terraform Cloud: `TF_CLOUD`
+    - `IKR:TF_CLOUD_TOKEN`: User, team or organization token to use for authentication with Terraform Cloud. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
+    - `IKR:TF_CLOUD_AK_NAME`: Name to use for creating a variable in Terraform Cloud to store AWS Access Key. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
+    - `IKR:TF_CLOUD_AK_TYPE`: Whether to create access key as a `terraform` or `env` variable. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
+    - `IKR:TF_CLOUD_SK_NAME`: Name to use for creating a variable in Terraform Cloud to store AWS Secret Access Key. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
+    - `IKR:TF_CLOUD_SK_TYPE`: Whether to create secret access key as a `terraform` or `env` variable. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
+    - `IKR:TF_CLOUD_WORKSPACES`: ID of Terraform Cloud workspace to create the variables. To create the same variables in multiple workspaces separate workspace IDs by comma. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
