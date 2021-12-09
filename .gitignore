@@ -33,8 +33,8 @@ override.tf.json
 terraform.rc
 
 __pycache__
-*.json
-*.sh
+*/*.json
+*/*.sh
 header.tf
 creator.zip
 destructor.zip
