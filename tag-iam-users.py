@@ -23,7 +23,7 @@ IKR_AWS_REGION = os.environ.get('IKR_AWS_REGION', 'us-east-1')
 session = boto3.Session(aws_access_key_id=IKR_AWS_ACCESS_KEY_ID, aws_secret_access_key=IKR_AWS_SECRET_ACCESS_KEY, aws_session_token=IKR_AWS_SESSION_TOKEN, region_name=IKR_AWS_REGION, profile_name=IKR_AWS_PROFILE)
 iam = session.client('iam')
 
-iamUsers = json.load(open('user-tagging.json'))
+iamUsers = json.load(open('iam-user-tags.json'))
 
 def tag_user(userName, tags):
     print('Tagging user {}'.format(userName))

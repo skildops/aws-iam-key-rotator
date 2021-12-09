@@ -1,7 +1,7 @@
 {
   "IAM_USERNAME_1": {
-    "TAG_KEY_1": "TAG_VALUE",
-    "TAG_KEY_2": "TAG_VALUE"
+    "TAG_KEY_1": "TAG_VALUE_1",
+    "TAG_KEY_2": "TAG_VALUE_2"
   },
   "IAM_USERNAME_2": {
     "TAG_KEY": "TAG_VALUE"
