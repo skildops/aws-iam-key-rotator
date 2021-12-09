@@ -47,3 +47,6 @@ This tool is responsible for generating a new IAM access key pair every X days a
     - `IKR:TF_CLOUD_SK_NAME`: Name to use for creating a variable in Terraform Cloud to store AWS Secret Access Key. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
     - `IKR:TF_CLOUD_SK_TYPE`: Whether to create secret access key as a `terraform` or `env` variable. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
     - `IKR:TF_CLOUD_WORKSPACES`: ID of Terraform Cloud workspace to create the variables. To create the same variables in multiple workspaces separate workspace IDs by comma. **Note:** Required if `IKR:STORAGE_APP` is set to `TF_CLOUD`
+
+### Helper Script:
+- `tag-iam-users.py`: Tags IAM users by reading **iam-user-tags.json** file
