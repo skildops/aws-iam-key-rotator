@@ -5,6 +5,9 @@ import concurrent.futures
 
 from botocore.exceptions import ClientError
 
+# Local import
+import shared_functions
+
 # Table name which holds existing access key pair details to be deleted
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 
@@ -27,8 +30,39 @@ logger.setLevel(logging.INFO)
 
 def send_email(email, userName, existingAccessKey):
     mailSubject = 'Old Access Key Pair Deleted'
-    mailBodyPlain = 'Hey {},\nAn existing access key pair associated to your username has been deleted because it reached End-Of-Life.\n\nAccess Key: {}\n\nThanks,\nYour Security Team'.format(mailSubject, userName, existingAccessKey)
-    mailBodyHtml = '<html><head><title>{}</title></head><body>Hey &#x1F44B; {},<br/><br/>An existing access key pair associated to your username has been deleted because it reached End-Of-Life. <br/><br/>Access Key: <strong>{}</strong><br/><br/>Thanks,<br/>Your Security Team</body></html>'.format(mailSubject, userName, existingAccessKey)
+    mailBodyPlain = 'Hey {},\nAn existing access key pair associated to your username has been deleted because it reached End-Of-Life.\n\nAccount: {} ({})\nAccess Key: {}\n\nThanks,\nYour Security Team'.format(userName, shared_functions.fetch_account_info()['id'], shared_functions.fetch_account_info()['name'], existingAccessKey)
+    mailBodyHtml = '''
+    <!DOCTYPE html>
+    <html style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+            <title>{}</title>
+
+            <style type="text/css">
+                body {{
+                    -webkit-font-smoothing: antialiased;
+                    -webkit-text-size-adjust: none;
+                    width: 100% !important;
+                    height: 100%;
+                    line-height: 1.6em;
+                }}
+            </style>
+        </head>
+        <body>
+            <p>Hey &#x1F44B; {},</p>
+            <p>An existing access key pair associated to your username has been deleted because it reached End-Of-Life.<p/>
+            <p>
+                Account: <strong>{} ({})</strong>
+                <br/>
+                Access Key: <strong>{}</strong>
+            </p>
+            <p>
+                Thanks,<br/>
+                Your Security Team
+            </p>
+        </body>
+    </html>'''.format(mailSubject, userName, shared_functions.fetch_account_info()['id'], shared_functions.fetch_account_info()['name'], existingAccessKey)
     try:
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'smtp':
