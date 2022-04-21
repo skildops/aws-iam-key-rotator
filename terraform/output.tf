@@ -17,3 +17,13 @@ output "cron_expression" {
   value       = aws_cloudwatch_event_rule.iam_key_creator.schedule_expression
   description = "Interval at which `key creator` function will be invoked"
 }
+
+output "mailgun_ssm_parameter_arn" {
+  value       = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.arn) : null
+  description = "ARN of SSM parameter that stores mailgun API key. Available only if mail client is set to Mailgun"
+}
+
+output "smtp_ssm_parameter_arn" {
+  value       = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.arn) : null
+  description = "ARN of SSM parameter that stores SMTP password. Available only if mail client is set to SMTP"
+}
