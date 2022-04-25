@@ -9,9 +9,7 @@ This terraform module will deploy the following services:
 - CloudWatch Event
 - Lambda
 
-**Note:** You need to implement [remote backend](https://www.terraform.io/docs/language/settings/backends/index.html) by yourself and is recommended.
-
-# Usage Instructions
+**Note:** You need to implement [remote backend](https://www.terraform.io/docs/language/settings/backends/index.html) by yourself and is recommended for state management.
 
 ## Requirements
 
@@ -63,3 +61,5 @@ This terraform module will deploy the following services:
 | key_creator_function_name | Name of lambda function created to create a set of new key pair for IAM user |
 | key_destructor_function_name | Name of lambda function created to delete existing key pair which has reached its expiry |
 | cron_expression | Interval at which `key creator` function will be invoked |
+| mailgun_ssm_parameter_arn | ARN of SSM parameter that stores mailgun API key. Available only if mail client is set to Mailgun |
+| smtp_ssm_parameter_arn | ARN of SSM parameter that stores SMTP password. Available only if mail client is set to SMTP |
