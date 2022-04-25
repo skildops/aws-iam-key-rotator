@@ -7,6 +7,9 @@ import pytz
 from datetime import datetime, date
 from botocore.exceptions import ClientError
 
+# Local import
+import shared_functions
+
 # Table name which holds existing access key pair details to be deleted
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 
@@ -117,7 +120,7 @@ def fetch_user_details():
 def send_email(email, userName, accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge):
     try:
         mailSubject = 'New Access Key Pair'
-        mailBodyPlain = 'Hey {},\n\nA new access key pair has been generated for you. Please update the same wherever necessary.\n\nAccess Key: {}\nSecret Access Key: {}\nInstruction: {}\n\nNote: Existing key pair {} will be deleted after {} days so please update the key pair wherever required.\n\nThanks,\nYour Security Team'.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge)
+        mailBodyPlain = 'Hey {},\n\nA new access key pair has been generated for you. Please update the same wherever necessary.\n\nAccount: {} ({})\nAccess Key: {}\nSecret Access Key: {}\nInstruction: {}\n\nNote: Existing key pair {} will be deleted after {} days so please update the key pair wherever required.\n\nThanks,\nYour Security Team'.format(userName, shared_functions.fetch_account_info()['id'], shared_functions.fetch_account_info()['name'], accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge)
         mailBodyHtml = '''
         <!DOCTYPE html>
         <html style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
@@ -140,6 +143,8 @@ def send_email(email, userName, accessKey, secretKey, instruction, existingAcces
                 <p>Hey &#x1F44B; {},</p>
                 <p>A new access key pair has been generated for you. Please update the same wherever necessary.</p>
                 <p>
+                    Account: <b>{} ({})</b>
+                    <br/>
                     Access Key: <b>{}</b>
                     <br/>
                     Secret Access Key: <b>{}</b>
@@ -147,10 +152,12 @@ def send_email(email, userName, accessKey, secretKey, instruction, existingAcces
                     Instruction: <b>{}</b>
                 </p>
                 <p><b>Note:</b> Existing key pair <b>{}</b> will be deleted after <b>{}</b> days so please update the key pair wherever required.</p>
-                <p>Thanks,<br/>
-                Your Security Team</p>
+                <p>
+                    Thanks,<br/>
+                    Your Security Team
+                </p>
             </body>
-        </html>'''.format(mailSubject, userName, accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge)
+        </html>'''.format(mailSubject, userName, shared_functions.fetch_account_info()['id'], shared_functions.fetch_account_info()['name'], accessKey, secretKey, instruction, existingAccessKey, existingKeyDeleteAge)
 
         logger.info('Using {} as mail client'.format(MAIL_CLIENT))
         if MAIL_CLIENT == 'smtp':

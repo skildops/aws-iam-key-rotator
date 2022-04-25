@@ -19,11 +19,11 @@ output "cron_expression" {
 }
 
 output "mailgun_ssm_parameter_arn" {
-  value = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.arn) : null
+  value       = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.arn) : null
   description = "ARN of SSM parameter that stores mailgun API key. Available only if mail client is set to Mailgun"
 }
 
 output "smtp_ssm_parameter_arn" {
-  value = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.arn) : null
+  value       = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.arn) : null
   description = "ARN of SSM parameter that stores SMTP password. Available only if mail client is set to SMTP"
 }
