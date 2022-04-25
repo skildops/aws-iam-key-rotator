@@ -1,6 +1,6 @@
 # IAM Key Rotator
 
-![Test](https://img.shields.io/github/workflow/status/skildops/aws-iam-key-rotator/test/main?label=Test&style=for-the-badge) ![Checkov](https://img.shields.io/github/workflow/status/skildops/aws-iam-key-rotator/checkov/main?label=Checkov&style=for-the-badge)
+![Test](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/test/main?label=Test&style=for-the-badge) ![Checkov](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/checkov/main?label=Checkov&style=for-the-badge)
 
 This terraform module will deploy the following services:
 - DynamoDB Table
@@ -8,10 +8,8 @@ This terraform module will deploy the following services:
 - IAM Role Policy
 - CloudWatch Event
 - Lambda
-- Lambda Layer
-- SSM Parameter (Optional)
 
-**Note:** You need to implement [remote backend](https://www.terraform.io/docs/language/settings/backends/index.html) by yourself and is recommended for state management.
+**Note:** You need to implement [remote backend](https://www.terraform.io/docs/language/settings/backends/index.html) by yourself and is recommended.
 
 # Usage Instructions
 
@@ -65,5 +63,3 @@ This terraform module will deploy the following services:
 | key_creator_function_name | Name of lambda function created to create a set of new key pair for IAM user |
 | key_destructor_function_name | Name of lambda function created to delete existing key pair which has reached its expiry |
 | cron_expression | Interval at which `key creator` function will be invoked |
-| mailgun_ssm_parameter_arn | ARN of SSM parameter that stores mailgun API key. Available only if mail client is set to Mailgun |
-| smtp_ssm_parameter_arn | ARN of SSM parameter that stores SMTP password. Available only if mail client is set to SMTP |

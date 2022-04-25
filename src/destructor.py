@@ -5,7 +5,6 @@ import concurrent.futures
 
 from botocore.exceptions import ClientError
 
-# Local import
 import shared_functions
 
 # Table name which holds existing access key pair details to be deleted
@@ -38,7 +37,6 @@ def send_email(email, userName, existingAccessKey):
             <meta name="viewport" content="width=device-width" />
             <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
             <title>{}</title>
-
             <style type="text/css">
                 body {{
                     -webkit-font-smoothing: antialiased;

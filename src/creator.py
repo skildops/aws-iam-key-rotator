@@ -7,7 +7,6 @@ import pytz
 from datetime import datetime, date
 from botocore.exceptions import ClientError
 
-# Local import
 import shared_functions
 
 # Table name which holds existing access key pair details to be deleted
@@ -46,10 +45,17 @@ def fetch_users_with_email(user):
     userAttributes = {}
     keyUpdateInstructions = {}
     for t in resp['Tags']:
+        if t['Key'].lower() == 'ikr:email':
+            userAttributes['email'] = t['Value']
+
+        if t['Key'].lower() == 'ikr:rotate_after_days':
+            userAttributes['rotate_after'] = t['Value']
+
+        if t['Key'].lower() == 'ikr:delete_after_days':
+            userAttributes['delete_after'] = t['Value']
+
         if t['Key'].lower().startswith('ikr:instruction_'):
             keyUpdateInstructions[int(t['Key'].split('_')[1])] = t['Value']
-        elif t['Key'].lower().startswith('ikr:'):
-            userAttributes[t['Key'].split(':')[1].lower()] = t['Value']
 
     if len(keyUpdateInstructions) > 0:
         userAttributes['instruction'] = prepare_instruction(keyUpdateInstructions)
@@ -206,7 +212,7 @@ def create_user_key(userName, user):
             logger.warn('Skipping key creation for {} because 2 keys already exist. Please delete anyone to create new key'.format(userName))
         else:
             for k in user['keys']:
-                keyRotationAge = user['attributes']['rotate_after_days'] if 'rotate_after_days' in user['attributes'] else ROTATE_AFTER_DAYS
+                keyRotationAge = user['attributes']['rotate_after'] if 'rotate_after' in user['attributes'] else ROTATE_AFTER_DAYS
                 if k['ak_age_days'] <= int(keyRotationAge):
                     logger.info('Skipping key creation for {} because existing key is only {} day(s) old and the rotation is set for {} days'.format(userName, k['ak_age_days'], keyRotationAge))
                 else:
@@ -217,7 +223,7 @@ def create_user_key(userName, user):
                     logger.info('New key pair generated for user {}'.format(userName))
 
                     # Email keys to user
-                    existingKeyDeleteAge = user['attributes']['delete_after_days'] if 'delete_after_days' in user['attributes'] else DELETE_AFTER_DAYS
+                    existingKeyDeleteAge = user['attributes']['delete_after'] if 'delete_after' in user['attributes'] else DELETE_AFTER_DAYS
                     send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'], int(existingKeyDeleteAge))
 
                     # Mark exisiting key to destory after X days
