@@ -208,7 +208,6 @@ resource "aws_lambda_function" "iam_key_creator" {
       SMTP_PASSWORD_PARAMETER = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.*.name) : null
       MAILGUN_API_URL         = var.mailgun_api_url
       MAILGUN_API_KEY_NAME    = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.*.name) : null
-      ACCOUNT_ID              = local.account_id
     }
   }
 
@@ -326,7 +325,6 @@ resource "aws_lambda_function" "iam_key_destructor" {
       SMTP_PASSWORD_PARAMETER = var.mail_client == "smtp" ? join(",", aws_ssm_parameter.smtp_password.*.name) : null
       MAILGUN_API_URL         = var.mailgun_api_url
       MAILGUN_API_KEY_NAME    = var.mail_client == "mailgun" ? join(",", aws_ssm_parameter.mailgun.*.name) : null
-      ACCOUNT_ID              = local.account_id
     }
   }
 
