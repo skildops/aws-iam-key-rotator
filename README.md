@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/codeql/main?label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/paliwalvimal/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/paliwalvimal/aws-iam-key-rotator?style=for-the-badge)
 
-This tool is responsible for generating a new IAM access key pair every X days and mails it to the user via any of the supported mailer. It will also delete the existing key pair after a few days of new key generation giving the user window to update the new key wherever required.
+This tool generates a new IAM access key pair every X number of days and informs about the same using the supported mailers mentioned below. Moreover, it will delete the existing key pair once it reaches End-of-Life.
 
 ### Prerequisites:
 - [Terraform](https://www.terraform.io/downloads.html)
@@ -20,7 +20,7 @@ This tool is responsible for generating a new IAM access key pair every X days a
 - Mailgun
 - SMTP
 
-### Process:
+### Logic Flow:
 ![aws-iam-key-rotator](iam-key-rotator.jpeg "AWS IAM Key Rotator")
 
 - CloudWatch triggers lambda function which checks the age of access key for all the IAM users who have **IKR:EMAIL**(case-insensitive) tag attached.
