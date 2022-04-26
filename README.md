@@ -18,6 +18,7 @@ This tool is responsible for generating a new IAM access key pair every X days a
 ### Supported Mailers:
 - AWS SES
 - Mailgun
+- SMTP
 
 ### Process:
 ![aws-iam-key-rotator](iam-key-rotator.jpeg "AWS IAM Key Rotator")
