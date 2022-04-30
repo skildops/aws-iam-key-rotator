@@ -15,9 +15,6 @@ on:
   push:
     branches:
       - '**'
-  schedule:
-    - cron: '30 8 * * 6'
-
 jobs:
   analyze:
     name: Analyze

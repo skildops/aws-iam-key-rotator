@@ -1,5 +1,8 @@
 name: semgrep
 on:
+  push:
+    branches:
+      - '**'
   pull_request: {}
 jobs:
   semgrep:
