@@ -27,7 +27,7 @@ def send_email(mailTo, userName, mailSubject, mailFrom, mailBodyPlain, mailBodyH
     apiKey = resp['Parameter']['Value']
 
     logger.info('Sending mail to {} ({}) via Mailgun'.format(userName, mailTo))
-    resp = requests.post(MAILGUN_API_URL, auth=("api", apiKey),
+    resp = requests.post(MAILGUN_API_URL, auth=("api", apiKey), timeout=3,
         data={"from": mailFrom,
               "to": [mailTo],
               "subject": mailSubject,
