@@ -12,8 +12,6 @@ body:
     options:
     - label: I am running the latest version
       required: true
-    - label: I read the documentation properly and found no answer
-      required: true
     - label: I have checked to make sure that this issue has not already been filed
       required: true
 - type: textarea
@@ -45,15 +43,17 @@ body:
     description: |
       Example:
         - **Operating System**: Ubuntu 20.04
-        - **Terraform Version**: 1.4.0
-        - **Provider version**: v2.16.0 (AWS Provider Version)
+        - **Terraform Version**: 1.1.0
+        - **Provider version**: 4.16.0 (AWS Provider Version)
         - **Module Version**: v1.0.0
+        - **Python Version**: 3.9
     value: |
         - Operating System:
         - Terraform Version:
         - Provider version:
         - Module Version:
-    render: markdown
+        - Python Version:
+    render: Markdown
   validations:
     required: true
 - type: textarea
