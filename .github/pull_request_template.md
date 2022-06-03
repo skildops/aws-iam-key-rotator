@@ -16,11 +16,7 @@
 ## Description
 <!-- Please include a summary of the change and/or which issue is fixed  -->
 
----
-
 ## Additional context
 <!-- Add any other context or screenshots about the pull request here -->
-
----
 
 Fixes #{ISSUE_NUMBER}
