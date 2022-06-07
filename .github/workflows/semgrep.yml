@@ -33,9 +33,7 @@ jobs:
       # Fetch project source
       - uses: actions/checkout@v3
 
-      - run: semgrep ci --sarif --output=semgrep.sarif
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+      - run: semgrep ci --config "p/ci" --config "p/python" --config "p/owasp-top-ten" --sarif --output=semgrep.sarif
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2

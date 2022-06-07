@@ -1,6 +1,6 @@
 # IAM Key Rotator
 
-![Test](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/test/main?label=Test&style=for-the-badge) ![Checkov](https://img.shields.io/github/workflow/status/paliwalvimal/aws-iam-key-rotator/checkov/main?label=Checkov&style=for-the-badge)
+![Test](https://img.shields.io/github/workflow/status/skildops/aws-iam-key-rotator/test/main?label=Test&style=for-the-badge) ![Checkov](https://img.shields.io/github/workflow/status/skildops/aws-iam-key-rotator/checkov/main?label=Checkov&style=for-the-badge)
 
 This terraform module will deploy the following services:
 - DynamoDB Table
