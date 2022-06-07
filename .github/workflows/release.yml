@@ -40,6 +40,11 @@ jobs:
           languages: python
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: semgrep ci --config "p/ci" --config "p/python" --config "p/owasp-top-ten" --sarif --output=semgrep.sarif
   release:
     needs: [test, checkov, codeql]
     runs-on: ubuntu-latest
