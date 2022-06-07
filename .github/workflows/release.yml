@@ -7,7 +7,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
       - name: Terraform Init
@@ -19,7 +19,7 @@ jobs:
   checkov:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
@@ -33,13 +33,13 @@ jobs:
   codeql:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: python
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2
   semgrep:
     runs-on: ubuntu-latest
     steps:
@@ -49,7 +49,7 @@ jobs:
     needs: [test, checkov, codeql]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: "marvinpinto/action-automatic-releases@v1.1.2"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
