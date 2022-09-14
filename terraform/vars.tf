@@ -37,13 +37,13 @@ variable "table_name" {
 variable "enable_sse" {
   type        = bool
   default     = true
-  description = "Whether to enable server-side encryption"
+  description = "Whether to enable server-side encryption for dynamodb table"
 }
 
 variable "kms_key_arn" {
   type        = string
   default     = null
-  description = "ARN of customer owned CMK to use instead of AWS owned key"
+  description = "ARN of customer owned CMK to use instead of AWS owned key for dynamodb table"
 }
 
 variable "enable_pitr" {
@@ -84,7 +84,7 @@ variable "cron_expression" {
 
 variable "lambda_runtime" {
   type        = string
-  default     = "python3.8"
+  default     = "python3.9"
   description = "Lambda runtime to use for code execution for both creator and destructor function"
 }
 
