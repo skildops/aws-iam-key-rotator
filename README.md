@@ -31,7 +31,7 @@ This tool generates a new IAM access key pair every X number of days and informs
 
 ### Setup:
 - Use the [terraform module](terraform) included in this repo to create all the AWS resources required to automate IAM key rotation
-- Add following tags to the IAM user whose access keys needs to be automated. All the tags mentioned are case-insensitive:
+- Add the following tags to the IAM user whose access key pair generation needs to be automated. All the tags mentioned are **case-insensitive**:
   - Required:
     - `IKR:EMAIL`: Email address of IAM user where alerts related to access keys will be sent
   - Optional:
