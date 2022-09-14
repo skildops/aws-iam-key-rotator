@@ -182,3 +182,9 @@ variable "mailgun_api_key" {
   default     = null
   description = "API key for authenticating requests to Mailgun API. **Note:** Required if mail client is set to mailgun"
 }
+
+variable "cw_log_group_retention" {
+  type        = number
+  default     = 90
+  description = "Number of days to store the logs in a log group. Valid values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. To never expire the logs provide 0"
+}
