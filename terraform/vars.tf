@@ -37,13 +37,13 @@ variable "table_name" {
 variable "enable_sse" {
   type        = bool
   default     = true
-  description = "Whether to enable server-side encryption"
+  description = "Whether to enable server-side encryption for dynamodb table"
 }
 
 variable "kms_key_arn" {
   type        = string
   default     = null
-  description = "ARN of customer owned CMK to use instead of AWS owned key"
+  description = "ARN of customer owned CMK to use instead of AWS owned key for dynamodb table"
 }
 
 variable "enable_pitr" {
@@ -84,7 +84,7 @@ variable "cron_expression" {
 
 variable "lambda_runtime" {
   type        = string
-  default     = "python3.8"
+  default     = "python3.9"
   description = "Lambda runtime to use for code execution for both creator and destructor function"
 }
 
@@ -181,4 +181,16 @@ variable "mailgun_api_key" {
   type        = string
   default     = null
   description = "API key for authenticating requests to Mailgun API. **Note:** Required if mail client is set to mailgun"
+}
+
+variable "cw_log_group_retention" {
+  type        = number
+  default     = 90
+  description = "Number of days to store the logs in a log group. Valid values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. To never expire the logs provide 0"
+}
+
+variable "cw_logs_kms_key_arn" {
+  type        = string
+  default     = null
+  description = "ARN of KMS key to use for encrypting CloudWatch logs at rest"
 }

@@ -15,7 +15,7 @@ This terraform module will deploy the following services:
 
 | Name | Version |
 |------|---------|
-| aws | >= 3.42.0 |
+| aws | >= 4.0.0 |
 
 ## Inputs
 
@@ -27,15 +27,15 @@ This terraform module will deploy the following services:
 | secret_key | AWS secret key to use as authentication method | `string` | `null` | no |
 | session_token | AWS session token to use as authentication method | `string` | `null` | no |
 | table_name | Name of dynamodb table to store access keys to be deleted | `string` | `"iam-key-rotator"` | no |
-| enable_sse | Whether to enable server-side encryption | `bool` | `true` | no |
-| kms_key_arn | ARN of customer owned CMK to use instead of AWS owned key | `string` | `null` | no |
+| enable_sse | Whether to enable server-side encryption for dynamodb table | `bool` | `true` | no |
+| kms_key_arn | ARN of customer owned CMK to use instead of AWS owned key for dynamodb table | `string` | `null` | no |
 | enable_pitr | Enable point-in time recovery for dynamodb table | `bool` | `false` | no |
 | key_creator_role_name | Name for IAM role to assocaite with key creator lambda function | `string` | `"iam-key-creator"` | no |
 | key_creator_function_name | Name for lambda function responsible for creating new access key pair | `string` | `"iam-key-creator"` | no |
 | key_destructor_role_name | Name for IAM role to assocaite with key destructor lambda function | `string` | `"iam-key-destructor"` | no |
 | key_destructor_function_name | Name for lambda function responsible for deleting existing access key pair | `string` | `"iam-key-destructor"` | no |
 | cron_expression | [CRON expression](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schedule-expressions.html) to determine how frequently `key creator` function will be invoked to check if new key pair needs to be generated for an IAM user | `string` | `"0 12 * * ? *"` | no |
-| lambda_runtime | Lambda runtime to use for code execution for both creator and destructor function | `string` | `"python3.8"` | no |
+| lambda_runtime | Lambda runtime to use for code execution for both creator and destructor function | `string` | `"python3.9"` | no |
 | function_memory_size | Amount of memory to allocate to both creator and destructor function | `number` | `128` | no |
 | function_timeout | Timeout to set for both creator and destructor function | `number` | `10` | no |
 | reserved_concurrent_executions | Amount of reserved concurrent executions for this lambda function. A value of `0` disables lambda from being triggered and `-1` removes any concurrency limitations | `number` | `-1` | no |
@@ -52,6 +52,8 @@ This terraform module will deploy the following services:
 | smtp_password | Password to use with `mail_from` address for SMTP authentication. **Note:** Required if mail client is set to smtp | `string` | `null` | no |
 | mailgun_api_url | Mailgun API url for sending email. **Note:** Required if mail client is set to mailgun | `string` | `null` | no |
 | mailgun_api_key | API key for authenticating requests to Mailgun API. **Note:** Required if mail client is set to mailgun | `string` | `null` | no |
+| cw_log_group_retention | Number of days to store the logs in a log group. Valid values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. To never expire the logs provide 0 | `number` | `90` | no |
+| cw_logs_kms_key_arn | ARN of KMS key to use for encrypting CloudWatch logs at rest | `string` | `null` | no |
 
 ## Outputs
 

@@ -64,7 +64,7 @@ resource "aws_lambda_layer_version" "pytz" {
   description      = "https://pypi.org/project/pytz/"
   layer_name       = "pytz"
 
-  compatible_runtimes = ["python3.6", "python3.7", "python3.8"]
+  compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
 }
 
 resource "aws_lambda_layer_version" "requests" {
@@ -73,7 +73,7 @@ resource "aws_lambda_layer_version" "requests" {
   description      = "https://pypi.org/project/requests/"
   layer_name       = "requests"
 
-  compatible_runtimes = ["python3.6", "python3.7", "python3.8"]
+  compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
 }
 
 # ====== iam-key-creator ======
@@ -169,6 +169,13 @@ resource "aws_ssm_parameter" "smtp_password" {
   value = var.smtp_password
   type  = "SecureString"
   tags  = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "iam_key_creator" {
+  name              = "/aws/lambda/${var.key_creator_function_name}"
+  retention_in_days = var.cw_log_group_retention
+  kms_key_id        = var.cw_logs_kms_key_arn
+  tags              = var.tags
 }
 
 resource "aws_lambda_function" "iam_key_creator" {
@@ -288,6 +295,13 @@ resource "aws_lambda_event_source_mapping" "iam_key_destructor" {
   event_source_arn  = aws_dynamodb_table.iam_key_rotator.stream_arn
   function_name     = aws_lambda_function.iam_key_destructor.arn
   starting_position = "LATEST"
+}
+
+resource "aws_cloudwatch_log_group" "iam_key_destructor" {
+  name              = "/aws/lambda/${var.key_destructor_function_name}"
+  retention_in_days = var.cw_log_group_retention
+  kms_key_id        = var.cw_logs_kms_key_arn
+  tags              = var.tags
 }
 
 resource "aws_lambda_function" "iam_key_destructor" {
