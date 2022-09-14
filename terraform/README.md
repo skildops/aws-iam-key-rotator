@@ -52,6 +52,8 @@ This terraform module will deploy the following services:
 | smtp_password | Password to use with `mail_from` address for SMTP authentication. **Note:** Required if mail client is set to smtp | `string` | `null` | no |
 | mailgun_api_url | Mailgun API url for sending email. **Note:** Required if mail client is set to mailgun | `string` | `null` | no |
 | mailgun_api_key | API key for authenticating requests to Mailgun API. **Note:** Required if mail client is set to mailgun | `string` | `null` | no |
+| cw_log_group_retention | Number of days to store the logs in a log group. Valid values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. To never expire the logs provide 0 | `number` | `90` | no |
+| cw_logs_kms_key_arn | ARN of KMS key to use for encrypting CloudWatch logs at rest | `string` | `null` | no |
 
 ## Outputs
 

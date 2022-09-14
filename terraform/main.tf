@@ -172,9 +172,10 @@ resource "aws_ssm_parameter" "smtp_password" {
 }
 
 resource "aws_cloudwatch_log_group" "iam_key_creator" {
-  name = "/aws/lambda/${var.key_creator_function_name}"
+  name              = "/aws/lambda/${var.key_creator_function_name}"
   retention_in_days = var.cw_log_group_retention
-  tags = var.tags
+  kms_key_id        = var.cw_logs_kms_key_arn
+  tags              = var.tags
 }
 
 resource "aws_lambda_function" "iam_key_creator" {
@@ -297,9 +298,10 @@ resource "aws_lambda_event_source_mapping" "iam_key_destructor" {
 }
 
 resource "aws_cloudwatch_log_group" "iam_key_destructor" {
-  name = "/aws/lambda/${var.key_destructor_function_name}"
+  name              = "/aws/lambda/${var.key_destructor_function_name}"
   retention_in_days = var.cw_log_group_retention
-  tags = var.tags
+  kms_key_id        = var.cw_logs_kms_key_arn
+  tags              = var.tags
 }
 
 resource "aws_lambda_function" "iam_key_destructor" {

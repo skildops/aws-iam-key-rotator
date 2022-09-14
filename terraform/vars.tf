@@ -188,3 +188,9 @@ variable "cw_log_group_retention" {
   default     = 90
   description = "Number of days to store the logs in a log group. Valid values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. To never expire the logs provide 0"
 }
+
+variable "cw_logs_kms_key_arn" {
+  type        = string
+  default     = null
+  description = "ARN of KMS key to use for encrypting CloudWatch logs at rest"
+}
