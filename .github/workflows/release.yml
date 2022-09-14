@@ -42,11 +42,13 @@ jobs:
         uses: github/codeql-action/analyze@v2
   semgrep:
     runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
     steps:
       - uses: actions/checkout@v3
       - run: semgrep ci --config "p/ci" --config "p/python" --config "p/owasp-top-ten" --sarif --output=semgrep.sarif
   release:
-    needs: [test, checkov, codeql]
+    needs: [test, checkov, codeql, semgrep]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
