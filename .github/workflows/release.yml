@@ -13,9 +13,9 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
   checkov:
     runs-on: ubuntu-latest
     steps:
