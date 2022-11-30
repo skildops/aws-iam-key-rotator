@@ -6,10 +6,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
     steps:
       - uses: actions/checkout@v3
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2
       - name: Terraform Init
         id: init
         run: terraform init
@@ -21,17 +24,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Scan with Checkov
         id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
-          directory: .
+          directory: terraform
           framework: terraform
   codeql:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
     steps:
       - uses: actions/checkout@v3
       - name: Initialize CodeQL
@@ -42,6 +48,9 @@ jobs:
         uses: github/codeql-action/analyze@v2
   semgrep:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
     container:
       image: returntocorp/semgrep
     steps:

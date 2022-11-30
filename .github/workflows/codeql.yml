@@ -15,6 +15,9 @@ on:
   push:
     branches:
       - '**'
+defaults:
+  run:
+    working-directory: src
 jobs:
   analyze:
     name: Analyze
