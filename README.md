@@ -1,6 +1,6 @@
 ## aws-iam-key-rotator
 
-![License](https://img.shields.io/github/license/skildops/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/workflow/status/skildops/aws-iam-key-rotator/codeql/main?label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/skildops/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/skildops/aws-iam-key-rotator?style=for-the-badge)
+![License](https://img.shields.io/github/license/skildops/aws-iam-key-rotator?style=for-the-badge) ![CodeQL](https://img.shields.io/github/actions/workflow/status/skildops/aws-iam-key-rotator/codeql.yml?branch=main&label=CodeQL&style=for-the-badge) ![Commit](https://img.shields.io/github/last-commit/skildops/aws-iam-key-rotator?style=for-the-badge) ![Release](https://img.shields.io/github/v/release/skildops/aws-iam-key-rotator?style=for-the-badge)
 
 This tool generates a new IAM access key pair every X number of days and informs about the same using the supported mailers mentioned below. Moreover, it will delete the existing key pair once it reaches End-of-Life.
 
