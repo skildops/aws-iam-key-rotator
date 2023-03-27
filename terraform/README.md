@@ -44,6 +44,7 @@ This terraform module will deploy the following services:
 | rotate_after_days | Days after which a new access key pair should be generated. **Note:** If `IKR:ROTATE_AFTER_DAYS` tag is set for the IAM user, this is ignored | `number` | `85` | no |
 | delete_after_days | No. of days to wait for deleting existing key pair after a new key pair is generated. **Note:** If `IKR:DELETE_AFTER_DAYS` tag is set for the IAM user, this is ignored | `number` | `5` | no |
 | retry_after_mins | In case lambda fails to delete the old key, how long should it wait before the next try | `number` | `5` | no |
+| encrypt_key_pair | Whether to share encrypted version of key pair with the user instead of sending them in plain text. The encryption key will be stored in SSM paramter store in `/iakr/secret/iam/USERNAME` format | `bool` | `true` | no |
 | mail_client | Mail client to use. **Supported Clients:** smtp, ses and mailgun | `string` | `"ses"` | no |
 | mail_from | Email address which should be used for sending mails. **Note:** Prior setup of mail client is required | `string` | n/a | yes |
 | smtp_protocol | Security protocol to use for SMTP connection. **Supported values:** ssl and tls. **Note:** Required if mail client is set to smtp | `string` | `null` | no |

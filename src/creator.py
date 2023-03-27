@@ -8,6 +8,7 @@ from datetime import datetime, date
 from botocore.exceptions import ClientError
 
 import shared_functions
+import encryption
 
 # Table name which holds existing access key pair details to be deleted
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
@@ -17,6 +18,9 @@ ROTATE_AFTER_DAYS = os.environ.get('ROTATE_AFTER_DAYS', 85)
 
 # No. of days to wait for deleting existing key pair after a new key pair is generated
 DELETE_AFTER_DAYS = os.environ.get('DELETE_AFTER_DAYS', 5)
+
+# Whether to share encrypted version of key pair
+ENCRYPT_KEY_PAIR = os.environ.get('ENCRYPT_KEY_PAIR', True)
 
 # Mail client to use for sending new key creation or existing key deletion mail
 MAIL_CLIENT = os.environ.get('MAIL_CLIENT', 'ses')
@@ -190,6 +194,9 @@ def mark_key_for_destroy(userName, ak, existingKeyDeleteAge, email):
                 },
                 'delete_on': {
                     'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (existingKeyDeleteAge * 24 * 60 * 60))
+                },
+                'is_encrypted': {
+                    'S': 'Y' if ENCRYPT_KEY_PAIR else 'N'
                 }
             }
         )
@@ -217,7 +224,16 @@ def create_user_key(userName, user):
 
                     # Email keys to user
                     existingKeyDeleteAge = user['attributes']['delete_after_days'] if 'delete_after_days' in user['attributes'] else DELETE_AFTER_DAYS
-                    send_email(user['attributes']['email'], userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'], user['attributes']['instruction'], user['keys'][0]['ak'], int(existingKeyDeleteAge))
+
+                    if ENCRYPT_KEY_PAIR:
+                        userAccessKey, userSecretAccessKey = encryption.encrypt(userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'])
+                        userInstruction = 'The above key pair is encrypted so you need to decrypt it using the decryption.py file in the root path and encryption key stored in SSM parameter /ikr/secret/iam/{} before using the key pair. {}'.format(userName, user['attributes']['instruction'])
+                    else:
+                        userAccessKey = resp['AccessKey']['AccessKeyId']
+                        userSecretAccessKey = resp['AccessKey']['SecretAccessKey']
+                        userInstruction = user['attributes']['instruction']
+
+                    send_email(user['attributes']['email'], userName, userAccessKey, userSecretAccessKey, userInstruction, user['keys'][0]['ak'], int(existingKeyDeleteAge))
 
                     # Mark exisiting key to destory after X days
                     mark_key_for_destroy(userName, user['keys'][0]['ak'], int(existingKeyDeleteAge), user['attributes']['email'])

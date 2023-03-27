@@ -76,6 +76,15 @@ resource "aws_lambda_layer_version" "requests" {
   compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
 }
 
+resource "aws_lambda_layer_version" "cryptography" {
+  filename         = "cryptography.zip"
+  source_code_hash = filebase64sha256("cryptography.zip")
+  description      = "https://cryptography.io/en/latest/"
+  layer_name       = "cryptography"
+
+  compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
+}
+
 # ====== iam-key-creator ======
 resource "aws_iam_role" "iam_key_creator" {
   name                  = var.key_creator_role_name
@@ -111,7 +120,8 @@ resource "aws_iam_role_policy" "iam_key_creator_policy" {
       },
       {
         "Action": [
-          "ssm:GetParameter"
+          "ssm:GetParameter",
+          "ssm:PutParameter"
         ],
         "Effect": "Allow",
         "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/*"
@@ -196,7 +206,7 @@ resource "aws_lambda_function" "iam_key_creator" {
   timeout                        = var.function_timeout
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
-  layers = [aws_lambda_layer_version.pytz.arn, aws_lambda_layer_version.requests.arn]
+  layers = [aws_lambda_layer_version.pytz.arn, aws_lambda_layer_version.requests.arn, aws_lambda_layer_version.cryptography.arn]
 
   tracing_config {
     mode = var.xray_tracing_mode
@@ -207,6 +217,7 @@ resource "aws_lambda_function" "iam_key_creator" {
       IAM_KEY_ROTATOR_TABLE   = aws_dynamodb_table.iam_key_rotator.name
       ROTATE_AFTER_DAYS       = var.rotate_after_days
       DELETE_AFTER_DAYS       = var.delete_after_days
+      ENCRYPT_KEY_PAIR        = var.encrypt_key_pair
       MAIL_CLIENT             = var.mail_client
       MAIL_FROM               = var.mail_from
       SMTP_PROTOCOL           = var.smtp_protocol
