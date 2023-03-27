@@ -83,6 +83,7 @@ def destroy_user_key(rec):
         userName = key['user']['S']
         userEmail = key['email']['S']
         accessKey = key['ak']['S']
+        isEncrypted = key['is_encrypted']['S']
         try:
             logger.info('Deleting access key {} assocaited with user {}'.format(accessKey, userName))
             iam.delete_access_key(
@@ -110,6 +111,9 @@ def destroy_user_key(rec):
                     },
                     'delete_on': {
                         'N': str(int(key['delete_on']['N']) + (RETRY_AFTER_MINS * 60))
+                    },
+                    'is_encrypted': {
+                        'S': isEncrypted
                     }
                 }
             )

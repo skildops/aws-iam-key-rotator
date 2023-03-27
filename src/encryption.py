@@ -1,11 +1,12 @@
 import boto3
 import logging
 import sys
+import os
 
 from cryptography.fernet import Fernet
 from botocore.exceptions import ClientError
 
-ssm = boto3.client('ssm')
+ssm = boto3.client('ssm', region_name=os.environ.get('AWS_REGION'))
 
 logger = logging.getLogger('encryption')
 logger.setLevel(logging.INFO)

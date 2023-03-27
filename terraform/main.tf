@@ -280,10 +280,10 @@ resource "aws_iam_role_policy" "iam_key_destructor_policy" {
       },
       {
         "Action": [
-          "ssm:GetParameter"
+          "ssm:DeleteParameter"
         ],
         "Effect": "Allow",
-        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/*"
+        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/secret/iam/*"
       },
       {
         "Action": [
