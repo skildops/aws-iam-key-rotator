@@ -22,6 +22,7 @@ MAIL_FROM = os.environ.get('MAIL_FROM', None)
 # AWS_REGION is by default available within lambda environment
 iam = boto3.client('iam', region_name=os.environ.get('AWS_REGION'))
 ses = boto3.client('ses', region_name=os.environ.get('AWS_REGION'))
+ssm = boto3.client('ssm', region_name=os.environ.get('AWS_REGION'))
 dynamodb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION'))
 
 logger = logging.getLogger('destructor')
@@ -77,6 +78,16 @@ def send_email(email, userName, existingAccessKey):
     except (Exception, ClientError) as ce:
         logger.error('Failed to send mail to user {} ({}). Reason: {}'.format(userName, email, ce))
 
+def delete_encryption_key(userName):
+    try:
+        logger.info('Deleting encryption key for {} user'.format(userName))
+        ssm.delete_parameter(
+            Name='/iakr/secret/iam/{}'.format(userName)
+        )
+        logger.info('Encryption key deleted for {} user'.format(userName))
+    except ClientError as ce:
+        logger.error('Unable to delete encryption key for {} user. Reason: {}'.format(userName, ce))
+
 def destroy_user_key(rec):
     if rec['eventName'] == 'REMOVE':
         key = rec['dynamodb']['OldImage']
@@ -91,6 +102,9 @@ def destroy_user_key(rec):
                 AccessKeyId=accessKey
             )
             logger.info('Access Key {} has been deleted'.format(accessKey))
+
+            # Delete user encryption key stored in ssm
+            delete_encryption_key(userName)
 
             # Send mail to user about key deletion
             send_email(userEmail, userName, accessKey)
