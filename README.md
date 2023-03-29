@@ -41,3 +41,4 @@ This tool generates a new IAM access key pair every X number of days and informs
 
 ### Helper Script:
 - `tag-iam-users.py`: Tags IAM users by reading **iam-user-tags.json** file
+- `decryption.py`: Decrypt cipher text using the encryption key stored in the SSM parmeter store
