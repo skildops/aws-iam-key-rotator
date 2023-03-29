@@ -139,7 +139,7 @@ variable "retry_after_mins" {
 variable "encrypt_key_pair" {
   type        = bool
   default     = true
-  description = "Whether to share encrypted version of key pair with the user instead of sending them in plain text. The encryption key will be stored in SSM paramter store in `/iakr/secret/iam/USERNAME` format"
+  description = "Whether to share encrypted version of key pair with the user instead of sending them in plain text. The encryption key will be stored in SSM paramter store in `/ikr/secret/iam/USERNAME` format"
 }
 
 variable "mail_client" {

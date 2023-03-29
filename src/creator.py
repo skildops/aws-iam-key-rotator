@@ -227,7 +227,7 @@ def create_user_key(userName, user):
 
                     if ENCRYPT_KEY_PAIR:
                         userAccessKey, userSecretAccessKey = encryption.encrypt(userName, resp['AccessKey']['AccessKeyId'], resp['AccessKey']['SecretAccessKey'])
-                        userInstruction = 'The above key pair is encrypted so you need to decrypt it using the decryption.py file in the root path and encryption key stored in SSM parameter /ikr/secret/iam/{} before using the key pair. {}'.format(userName, user['attributes']['instruction'])
+                        userInstruction = 'The above key pair is encrypted so you need to decrypt it using the encryption key stored in SSM parameter /ikr/secret/iam/{} before using the key pair. You can use the *decryption.py* file present in the *skildops/aws-iam-key-rotator* repo. {}'.format(userName, user['attributes']['instruction'])
                     else:
                         userAccessKey = resp['AccessKey']['AccessKeyId']
                         userSecretAccessKey = resp['AccessKey']['SecretAccessKey']

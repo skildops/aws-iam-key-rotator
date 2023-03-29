@@ -82,7 +82,7 @@ def delete_encryption_key(userName):
     try:
         logger.info('Deleting encryption key for {} user'.format(userName))
         ssm.delete_parameter(
-            Name='/iakr/secret/iam/{}'.format(userName)
+            Name='/ikr/secret/iam/{}'.format(userName)
         )
         logger.info('Encryption key deleted for {} user'.format(userName))
     except ClientError as ce:

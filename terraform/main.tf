@@ -106,7 +106,8 @@ resource "aws_iam_role_policy" "iam_key_creator_policy" {
           "iam:ListUserTags",
           "iam:ListAccessKeys",
           "iam:ListUsers",
-          "iam:CreateAccessKey"
+          "iam:CreateAccessKey",
+          "iam:ListAccountAliases"
         ],
         "Effect": "Allow",
         "Resource": "*"
@@ -124,7 +125,7 @@ resource "aws_iam_role_policy" "iam_key_creator_policy" {
           "ssm:PutParameter"
         ],
         "Effect": "Allow",
-        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/*"
+        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"
       },
       {
         "Action": [
@@ -167,7 +168,7 @@ resource "aws_lambda_permission" "iam_key_creator" {
 
 resource "aws_ssm_parameter" "mailgun" {
   count = var.mail_client == "mailgun" ? 1 : 0
-  name  = "/iakr/secret/mailgun"
+  name  = "/ikr/secret/mailgun"
   value = var.mailgun_api_key
   type  = "SecureString"
   tags  = var.tags
@@ -175,7 +176,7 @@ resource "aws_ssm_parameter" "mailgun" {
 
 resource "aws_ssm_parameter" "smtp_password" {
   count = var.mail_client == "smtp" ? 1 : 0
-  name  = "/iakr/secret/smtp"
+  name  = "/ikr/secret/smtp"
   value = var.smtp_password
   type  = "SecureString"
   tags  = var.tags
@@ -283,7 +284,7 @@ resource "aws_iam_role_policy" "iam_key_destructor_policy" {
           "ssm:DeleteParameter"
         ],
         "Effect": "Allow",
-        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/iakr/secret/iam/*"
+        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/secret/iam/*"
       },
       {
         "Action": [
