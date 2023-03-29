@@ -11,6 +11,11 @@ This terraform module will deploy the following services:
 
 **Note:** You need to implement [remote backend](https://www.terraform.io/docs/language/settings/backends/index.html) by yourself and is recommended for state management.
 
+**Important:** `cryptography` library has issues with AWS lambda so use the following command to build the package
+```bash
+pip install --platform manylinux2014_x86_64 --implementation cp --python 3.9 --only-binary=:all: --target . cryptography
+```
+
 ## Requirements
 
 | Name | Version |

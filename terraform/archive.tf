@@ -1,48 +1,28 @@
-data "template_file" "creator" {
-  template = file("../src/creator.py")
-}
-
-data "template_file" "destructor" {
-  template = file("../src/destructor.py")
-}
-
-data "template_file" "shared_functions" {
-  template = file("../src/shared_functions.py")
-}
-
-data "template_file" "ses_mailer" {
-  template = file("../src/ses_mailer.py")
-}
-
-data "template_file" "mailgun_mailer" {
-  template = file("../src/mailgun_mailer.py")
-}
-
-data "template_file" "smtp_mailer" {
-  template = file("../src/smtp_mailer.py")
-}
-
 data "archive_file" "creator" {
   type        = "zip"
   output_path = "${path.module}/creator.zip"
   source {
-    content  = data.template_file.creator.rendered
+    content  = file("../src/creator.py")
     filename = "creator.py"
   }
   source {
-    content  = data.template_file.shared_functions.rendered
+    content  = file("../src/shared_functions.py")
     filename = "shared_functions.py"
   }
   source {
-    content  = data.template_file.ses_mailer.rendered
+    content  = file("../src/encryption.py")
+    filename = "encryption.py"
+  }
+  source {
+    content  = file("../src/ses_mailer.py")
     filename = "ses_mailer.py"
   }
   source {
-    content  = data.template_file.mailgun_mailer.rendered
+    content  = file("../src/mailgun_mailer.py")
     filename = "mailgun_mailer.py"
   }
   source {
-    content  = data.template_file.smtp_mailer.rendered
+    content  = file("../src/smtp_mailer.py")
     filename = "smtp_mailer.py"
   }
 }
@@ -51,23 +31,23 @@ data "archive_file" "destructor" {
   type        = "zip"
   output_path = "${path.module}/destructor.zip"
   source {
-    content  = data.template_file.destructor.rendered
+    content  = file("../src/destructor.py")
     filename = "destructor.py"
   }
   source {
-    content  = data.template_file.shared_functions.rendered
+    content  = file("../src/shared_functions.py")
     filename = "shared_functions.py"
   }
   source {
-    content  = data.template_file.ses_mailer.rendered
+    content  = file("../src/ses_mailer.py")
     filename = "ses_mailer.py"
   }
   source {
-    content  = data.template_file.mailgun_mailer.rendered
+    content  = file("../src/mailgun_mailer.py")
     filename = "mailgun_mailer.py"
   }
   source {
-    content  = data.template_file.smtp_mailer.rendered
+    content  = file("../src/smtp_mailer.py")
     filename = "smtp_mailer.py"
   }
 }

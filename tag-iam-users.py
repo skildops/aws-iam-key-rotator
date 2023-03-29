@@ -6,21 +6,21 @@ import concurrent.futures
 from botocore.exceptions import ClientError
 
 # AWS Profile to use for API calls
-IKR_AWS_PROFILE = os.environ.get('IKR_AWS_PROFILE', None)
+AWS_PROFILE = os.environ.get('AWS_PROFILE', None)
 
 # AWS Access Key to use for API calls
-IKR_AWS_ACCESS_KEY_ID = os.environ.get('IKR_AWS_ACCESS_KEY_ID', None)
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
 
 # AWS Secret Access Key to use for API calls
-IKR_AWS_SECRET_ACCESS_KEY = os.environ.get('IKR_AWS_SECRET_ACCESS_KEY', None)
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
 
 # AWS Session Token to use for API calls
-IKR_AWS_SESSION_TOKEN = os.environ.get('IKR_AWS_SESSION_TOKEN', None)
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN', None)
 
 # AWS region to use
-IKR_AWS_REGION = os.environ.get('IKR_AWS_REGION', 'us-east-1')
+AWS_REGION = 'us-east-1'
 
-session = boto3.Session(aws_access_key_id=IKR_AWS_ACCESS_KEY_ID, aws_secret_access_key=IKR_AWS_SECRET_ACCESS_KEY, aws_session_token=IKR_AWS_SESSION_TOKEN, region_name=IKR_AWS_REGION, profile_name=IKR_AWS_PROFILE)
+session = boto3.Session(aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN, region_name=AWS_REGION, profile_name=AWS_PROFILE)
 iam = session.client('iam')
 
 iamUsers = json.load(open('iam-user-tags.json'))
