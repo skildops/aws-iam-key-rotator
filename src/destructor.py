@@ -11,7 +11,7 @@ import shared_functions
 IAM_KEY_ROTATOR_TABLE = os.environ.get('IAM_KEY_ROTATOR_TABLE', None)
 
 # In case lambda fails to delete the old key, how long should it wait before the next try
-RETRY_AFTER_MINS = os.environ.get('RETRY_AFTER_MINS', 5)
+RETRY_AFTER_MINS = int(os.environ.get('RETRY_AFTER_MINS', 5))
 
 # Mail client to use for sending new key creation or existing key deletion mail
 MAIL_CLIENT = os.environ.get('MAIL_CLIENT', 'ses')
@@ -87,6 +87,9 @@ def delete_encryption_key(userName):
         logger.info('Encryption key deleted for {} user'.format(userName))
     except ClientError as ce:
         logger.error('Unable to delete encryption key for {} user. Reason: {}'.format(userName, ce))
+        return False
+
+    return True
 
 def destroy_user_key(rec):
     if rec['eventName'] == 'REMOVE':
@@ -94,7 +97,7 @@ def destroy_user_key(rec):
         userName = key['user']['S']
         userEmail = key['email']['S']
         accessKey = key['ak']['S']
-        isEncrypted = key['is_encrypted']['S']
+        delEncKey = key['delete_enc_key']['S']
         try:
             logger.info('Deleting access key {} assocaited with user {}'.format(accessKey, userName))
             iam.delete_access_key(
@@ -104,16 +107,18 @@ def destroy_user_key(rec):
             logger.info('Access Key {} has been deleted'.format(accessKey))
 
             # Delete user encryption key stored in ssm
-            delete_encryption_key(userName)
+            if delEncKey == 'Y':
+                encKeyDeleted = delete_encryption_key(userName)
 
             # Send mail to user about key deletion
             send_email(userEmail, userName, accessKey)
         except (Exception, ClientError) as ce:
             logger.error('Failed to delete access key {}. Reason: {}'.format(accessKey, ce))
             logger.info('Adding access key {} back to the database'.format(accessKey))
+
             dynamodb.put_item(
                 TableName=IAM_KEY_ROTATOR_TABLE,
-                Key={
+                Item={
                     'user': {
                         'S': userName
                     },
@@ -126,8 +131,8 @@ def destroy_user_key(rec):
                     'delete_on': {
                         'N': str(int(key['delete_on']['N']) + (RETRY_AFTER_MINS * 60))
                     },
-                    'is_encrypted': {
-                        'S': isEncrypted
+                    'delete_enc_key': {
+                        'S': 'N' if delEncKey == 'Y' and encKeyDeleted else delEncKey
                     }
                 }
             )

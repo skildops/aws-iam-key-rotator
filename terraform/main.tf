@@ -59,29 +59,26 @@ resource "aws_dynamodb_table" "iam_key_rotator" {
 
 # ====== Lambda Layers =====
 resource "aws_lambda_layer_version" "pytz" {
-  filename         = "pytz.zip"
-  source_code_hash = filebase64sha256("pytz.zip")
-  description      = "https://pypi.org/project/pytz/"
-  layer_name       = "pytz"
-
+  filename            = "pytz.zip"
+  source_code_hash    = filebase64sha256("pytz.zip")
+  description         = "https://pypi.org/project/pytz/"
+  layer_name          = "pytz"
   compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
 }
 
 resource "aws_lambda_layer_version" "requests" {
-  filename         = "requests.zip"
-  source_code_hash = filebase64sha256("requests.zip")
-  description      = "https://pypi.org/project/requests/"
-  layer_name       = "requests"
-
+  filename            = "requests.zip"
+  source_code_hash    = filebase64sha256("requests.zip")
+  description         = "https://pypi.org/project/requests/"
+  layer_name          = "requests"
   compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
 }
 
 resource "aws_lambda_layer_version" "cryptography" {
-  filename         = "cryptography.zip"
-  source_code_hash = filebase64sha256("cryptography.zip")
-  description      = "https://cryptography.io/en/latest/"
-  layer_name       = "cryptography"
-
+  filename            = "cryptography.zip"
+  source_code_hash    = filebase64sha256("cryptography.zip")
+  description         = "https://cryptography.io/en/latest/"
+  layer_name          = "cryptography"
   compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
 }
 
@@ -93,50 +90,58 @@ resource "aws_iam_role" "iam_key_creator" {
   tags                  = var.tags
 }
 
-resource "aws_iam_role_policy" "iam_key_creator_policy" {
-  name = "${var.key_creator_role_name}-policy"
-  role = aws_iam_role.iam_key_creator.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "iam:ListUserTags",
-          "iam:ListAccessKeys",
-          "iam:ListUsers",
-          "iam:CreateAccessKey",
-          "iam:ListAccountAliases"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-      },
-      {
-        "Action": [
-          "dynamodb:PutItem"
-        ],
-        "Effect": "Allow",
-        "Resource": "${aws_dynamodb_table.iam_key_rotator.arn}"
-      },
-      {
-        "Action": [
-          "ssm:GetParameter",
-          "ssm:PutParameter"
-        ],
-        "Effect": "Allow",
-        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"
-      },
-      {
-        "Action": [
-          "ses:SendEmail"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-      }
+data "aws_iam_policy_document" "iam_key_creator_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "iam:ListUserTags",
+      "iam:ListAccessKeys",
+      "iam:ListUsers",
+      "iam:CreateAccessKey",
+      "iam:ListAccountAliases"
     ]
+    resources = ["*"]
   }
-  EOF
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:PutItem"
+    ]
+    resources = [aws_dynamodb_table.iam_key_rotator.arn]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter"
+    ]
+    resources = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"]
+  }
+
+  dynamic "statement" {
+    for_each = var.encrypt_key_pair == true ? [0] : []
+    content {
+      effect    = "Allow"
+      actions   = ["ssm:PutParameter"]
+      resources = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.mail_client == "ses" ? [0] : []
+    content {
+      effect    = "Allow"
+      actions   = ["ses:SendEmail"]
+      resources = ["*"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "iam_key_creator_policy" {
+  name   = "${var.key_creator_role_name}-policy"
+  role   = aws_iam_role.iam_key_creator.id
+  policy = data.aws_iam_policy_document.iam_key_creator_policy.json
 }
 
 resource "aws_iam_role_policy_attachment" "iam_key_creator_logs" {
@@ -145,11 +150,11 @@ resource "aws_iam_role_policy_attachment" "iam_key_creator_logs" {
 }
 
 resource "aws_cloudwatch_event_rule" "iam_key_creator" {
-  name        = "IAMAccessKeyCreator"
-  description = "Triggers a lambda function periodically which creates a set of new access key pair for a user if the existing key pair is X days old"
-  is_enabled  = true
-
+  name                = "IAMAccessKeyCreator"
+  description         = "Triggers a lambda function periodically which creates a set of new access key pair for a user if the existing key pair is X days old"
+  is_enabled          = true
   schedule_expression = "cron(${var.cron_expression})"
+  tags                = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "iam_key_creator" {
@@ -242,60 +247,59 @@ resource "aws_iam_role" "iam_key_destructor" {
   tags                  = var.tags
 }
 
-resource "aws_iam_role_policy" "iam_key_destructor_policy" {
-  name = "${var.key_destructor_role_name}-policy"
-  role = aws_iam_role.iam_key_destructor.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "iam:DeleteAccessKey"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-      },
-      {
-        "Action": [
-          "dynamodb:PutItem"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_dynamodb_table.iam_key_rotator.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "dynamodb:DescribeStream",
-          "dynamodb:GetRecords",
-          "dynamodb:GetShardIterator",
-          "dynamodb:ListShards",
-          "dynamodb:ListStreams"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_dynamodb_table.iam_key_rotator.stream_arn}"
-        ]
-      },
-      {
-        "Action": [
-          "ssm:DeleteParameter"
-        ],
-        "Effect": "Allow",
-        "Resource": "arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/secret/iam/*"
-      },
-      {
-        "Action": [
-          "ses:SendEmail"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-      }
+data "aws_iam_policy_document" "iam_key_destructor_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "iam:DeleteAccessKey",
+      # "iam:ListAccountAliases"
     ]
+    resources = ["*"]
   }
-  EOF
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:PutItem"
+    ]
+    resources = [aws_dynamodb_table.iam_key_rotator.arn]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:DescribeStream",
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:ListShards",
+      "dynamodb:ListStreams"
+    ]
+    resources = [aws_dynamodb_table.iam_key_rotator.stream_arn]
+  }
+
+  dynamic "statement" {
+    for_each = var.encrypt_key_pair == true ? [0] : []
+    content {
+      effect    = "Allow"
+      actions   = ["ssm:DeleteParameter"]
+      resources = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/secret/iam/*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.mail_client == "ses" ? [0] : []
+    content {
+      effect    = "Allow"
+      actions   = ["ses:SendEmail"]
+      resources = ["*"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "iam_key_destructor_policy" {
+  name   = "${var.key_destructor_role_name}-policy"
+  role   = aws_iam_role.iam_key_destructor.id
+  policy = data.aws_iam_policy_document.iam_key_destructor_policy.json
 }
 
 resource "aws_iam_role_policy_attachment" "iam_key_destructor_logs" {
@@ -304,9 +308,10 @@ resource "aws_iam_role_policy_attachment" "iam_key_destructor_logs" {
 }
 
 resource "aws_lambda_event_source_mapping" "iam_key_destructor" {
-  event_source_arn  = aws_dynamodb_table.iam_key_rotator.stream_arn
-  function_name     = aws_lambda_function.iam_key_destructor.arn
-  starting_position = "LATEST"
+  event_source_arn       = aws_dynamodb_table.iam_key_rotator.stream_arn
+  function_name          = aws_lambda_function.iam_key_destructor.arn
+  starting_position      = "LATEST"
+  maximum_retry_attempts = 0
 }
 
 resource "aws_cloudwatch_log_group" "iam_key_destructor" {

@@ -195,7 +195,7 @@ def mark_key_for_destroy(userName, ak, existingKeyDeleteAge, email):
                 'delete_on': {
                     'N': str(round(datetime(today.year, today.month, today.day, tzinfo=pytz.utc).timestamp()) + (existingKeyDeleteAge * 24 * 60 * 60))
                 },
-                'is_encrypted': {
+                'delete_enc_key': {
                     'S': 'Y' if ENCRYPT_KEY_PAIR else 'N'
                 }
             }
