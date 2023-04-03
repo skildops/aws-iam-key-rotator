@@ -245,6 +245,9 @@ def create_user_keys(users):
         [executor.submit(create_user_key, user, users[user]) for user in users]
 
 def handler(event, context):
+    global ENCRYPT_KEY_PAIR
+    ENCRYPT_KEY_PAIR = False if ENCRYPT_KEY_PAIR == 'false' else True
+
     if IAM_KEY_ROTATOR_TABLE is None:
         logger.error('IAM_KEY_ROTATOR_TABLE is required. Current value: {}'.format(IAM_KEY_ROTATOR_TABLE))
     elif MAIL_FROM is None:

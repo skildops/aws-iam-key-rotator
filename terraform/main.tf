@@ -64,6 +64,7 @@ resource "aws_lambda_layer_version" "pytz" {
   description         = "https://pypi.org/project/pytz/"
   layer_name          = "pytz"
   compatible_runtimes = ["python3.6", "python3.7", "python3.8", "python3.9"]
+
 }
 
 resource "aws_lambda_layer_version" "requests" {
@@ -252,7 +253,7 @@ data "aws_iam_policy_document" "iam_key_destructor_policy" {
     effect = "Allow"
     actions = [
       "iam:DeleteAccessKey",
-      # "iam:ListAccountAliases"
+      "iam:ListAccountAliases"
     ]
     resources = ["*"]
   }
