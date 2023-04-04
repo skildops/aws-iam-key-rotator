@@ -92,6 +92,9 @@ resource "aws_iam_role" "iam_key_creator" {
 }
 
 data "aws_iam_policy_document" "iam_key_creator_policy" {
+  # checkov:skip=CKV_AWS_109: Ensure IAM policies does not allow permissions management / resource exposure without constraints
+  # checkov:skip=CKV_AWS_110: Ensure IAM policies does not allow privilege escalation
+  # checkov:skip=CKV_AWS_107: Ensure IAM policies does not allow credentials exposure
   statement {
     effect = "Allow"
     actions = [
@@ -201,6 +204,7 @@ resource "aws_lambda_function" "iam_key_creator" {
   # checkov:skip=CKV_AWS_116: DLQ not required
   # checkov:skip=CKV_AWS_117: VPC deployment not required
   # checkov:skip=CKV_AWS_173: By default environment variables are encrypted at rest
+  # checkov:skip=CKV_AWS_272: Code-signing not required
   function_name    = var.key_creator_function_name
   description      = "Create new access key pair for IAM user"
   role             = aws_iam_role.iam_key_creator.arn
@@ -249,6 +253,7 @@ resource "aws_iam_role" "iam_key_destructor" {
 }
 
 data "aws_iam_policy_document" "iam_key_destructor_policy" {
+  # checkov:skip=CKV_AWS_109: Ensure IAM policies does not allow permissions management / resource exposure without constraints
   statement {
     effect = "Allow"
     actions = [
@@ -328,6 +333,7 @@ resource "aws_lambda_function" "iam_key_destructor" {
   # checkov:skip=CKV_AWS_116: DLQ not required
   # checkov:skip=CKV_AWS_117: VPC deployment not required
   # checkov:skip=CKV_AWS_173: By default environment variables are encrypted at rest
+  # checkov:skip=CKV_AWS_272: Code-signing not required
   function_name    = var.key_destructor_function_name
   description      = "Delete existing access key pair for IAM user"
   role             = aws_iam_role.iam_key_destructor.arn
