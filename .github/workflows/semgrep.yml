@@ -21,9 +21,6 @@ defaults:
 
 jobs:
   semgrep:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     name: scan
     runs-on: ubuntu-latest
     container:
@@ -34,7 +31,10 @@ jobs:
       # Fetch project source
       - uses: actions/checkout@v3
 
-      - run: semgrep ci --config "p/ci" --config "p/python" --config "p/owasp-top-ten" --sarif --output=semgrep.sarif
+      - run: semgrep ci --sarif --output=semgrep.sarif
+        env:
+          # Add the rules that Semgrep uses by setting the SEMGREP_RULES environment variable.
+          SEMGREP_RULES: p/ci,p/python,p/owasp-top-ten,p/cwe-top-25 # more at semgrep.dev/explore
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2
