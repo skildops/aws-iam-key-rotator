@@ -2,8 +2,8 @@ name: semgrep
 
 on:
   # Scan changed files in PRs, block on new issues only (existing issues ignored)
-  pull_request:
-    branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
 
   # Scan all files on branches, block on any issues
   push:
@@ -15,26 +15,30 @@ on:
   # schedule:
   #   - cron: '30 0 1,15 * *' # scheduled for 00:30 UTC on both the 1st and 15th of the month
 
+permissions:
+  contents: read # for actions/checkout to fetch code
+  security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+
 defaults:
   run:
     working-directory: src
 
 jobs:
   semgrep:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     name: scan
     runs-on: ubuntu-latest
-    container:
-      image: returntocorp/semgrep
-    # Skip any PR created by dependabot to avoid permission issues
-    if: (github.actor != 'dependabot[bot]')
     steps:
       # Fetch project source
       - uses: actions/checkout@v3
 
-      - run: semgrep ci --config "p/ci" --config "p/python" --config "p/owasp-top-ten" --sarif --output=semgrep.sarif
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          generateSarif: "1"
+          config: >-
+            p/ci
+            p/python
+            p/owasp-top-ten
+            p/cwe-top-25
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2
