@@ -28,6 +28,7 @@ SMTP_SERVER = os.environ.get("SMTP_SERVER", None)
 # SSM Parameter name which holds SMTP server password
 SMTP_PASSWORD_PARAMETER = os.environ.get("SMTP_PASSWORD_PARAMETER")
 
+
 def send_via_ssl(user_name, mail_from, smtp_password, mail_to, mail_body):
     """
     Send email via SMTP over SSL
@@ -39,8 +40,9 @@ def send_via_ssl(user_name, mail_from, smtp_password, mail_to, mail_body):
             server.login(mail_from, smtp_password)
             server.sendmail(mail_from, mail_to, mail_body)
         logger.info("Mail sent to %s (%s) via SMTP over SSL", user_name, mail_to)
-    except Exception as e:
-        logger.error("Unable to send mail via SSL to %s. Reason: %s", mail_to, e)
+    except Exception as ex:
+        logger.error("Unable to send mail via SSL to %s. Reason: %s", mail_to, ex)
+
 
 def send_via_tls(user_name, mail_from, smtp_password, mail_to, mail_body):
     """
@@ -54,10 +56,13 @@ def send_via_tls(user_name, mail_from, smtp_password, mail_to, mail_body):
             server.login(mail_from, smtp_password)
             server.sendmail(mail_from, mail_to, mail_body)
         logger.info("Mail sent to %s (%s) via SMTP over TLS", user_name, mail_to)
-    except Exception as e:
-        logger.error("Unable to send mail via TLS to %s. Reason: %s", mail_to, e)
+    except Exception as ex:
+        logger.error("Unable to send mail via TLS to %s. Reason: %s", mail_to, ex)
 
-def send_email(mail_to, user_name, mail_subject, mail_from, mail_body_plain, mail_body_html):
+
+def send_email(
+    mail_to, user_name, mail_subject, mail_from, mail_body_plain, mail_body_html
+):
     """
     Prepares message and decides if email will be sent over SSL or TLS
     """
@@ -66,10 +71,7 @@ def send_email(mail_to, user_name, mail_subject, mail_from, mail_body_plain, mai
         return False
 
     logger.info("Fetching SMTP password from SSM")
-    resp = ssm.get_parameter(
-        Name=SMTP_PASSWORD_PARAMETER,
-        WithDecryption=True
-    )
+    resp = ssm.get_parameter(Name=SMTP_PASSWORD_PARAMETER, WithDecryption=True)
     smtp_password = resp["Parameter"]["Value"]
 
     message = MIMEMultipart("alternative")
