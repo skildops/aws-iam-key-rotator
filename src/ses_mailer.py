@@ -1,35 +1,33 @@
-import boto3
+"""
+Send email via AWS SES service
+"""
+
 import os
 import logging
+import boto3
 
-ses = boto3.client('ses', region_name=os.environ.get('AWS_REGION'))
+ses = boto3.client("ses", region_name=os.environ.get("AWS_REGION"))
 
-logger = logging.getLogger('ses-mailer')
+logger = logging.getLogger("ses-mailer")
 logger.setLevel(logging.INFO)
 
-def send_email(mailTo, userName, mailSubject, mailFrom, mailBodyPlain, mailBodyHtml):
-    logger.info('Sending mail to {} ({}) via AWS SES'.format(userName, mailTo))
+
+def send_email(
+    mail_to, user_name, mail_subject, mail_from, mail_body_plain, mail_body_html
+):
+    """
+    Use AWS SES API to send email
+    """
+    logger.info("Sending mail to %s (%s) via AWS SES", user_name, mail_to)
     ses.send_email(
-        Source='{}'.format(mailFrom),
-        Destination={
-            'ToAddresses': [
-                mailTo
-            ]
-        },
+        Source=f"{mail_from}",
+        Destination={"ToAddresses": [mail_to]},
         Message={
-            'Subject': {
-                'Data': mailSubject
+            "Subject": {"Data": mail_subject},
+            "Body": {
+                "Text": {"Data": mail_body_plain, "Charset": "UTF-8"},
+                "Html": {"Data": mail_body_html, "Charset": "UTF-8"},
             },
-            'Body': {
-                'Text': {
-                    'Data': mailBodyPlain,
-                    'Charset': 'UTF-8'
-                },
-                'Html': {
-                    'Data': mailBodyHtml,
-                    'Charset': 'UTF-8'
-                }
-            }
-        }
+        },
     )
-    logger.info('Mail sent to {} ({}) via AWS SES'.format(userName, mailTo))
+    logger.info("Mail sent to %s (%s) via AWS SES", user_name, mail_to)
