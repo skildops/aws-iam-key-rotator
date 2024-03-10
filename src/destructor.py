@@ -42,14 +42,22 @@ def send_email(email, user_name, existing_access_key):
     account_name = shared_functions.fetch_account_info()["name"]
 
     mail_subject = "Old Access Key Pair Deleted"
-    mail_body_plain = f"Hey {user_name},\nAn existing access key pair associated to your username has been deleted because it reached End-Of-Life.\n\nAccount: {account_id} ({account_name})\nAccess Key: {existing_access_key}\n\nThanks,\nYour Security Team"
-    mail_body_html = f"""
+    mail_body_plain = f"""
+    Hey {user_name},\n
+    An existing access key pair associated to your username
+    has been deleted because it reached End-Of-Life.\n\n
+    Account: {account_id} ({account_name})\n
+    Access Key: {existing_access_key}\n\n
+    Thanks,\n
+    Your Security Team"""
+    mail_body_html = (
+        """
     <!DOCTYPE html>
     <html style="font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
         <head>
             <meta name="viewport" content="width=device-width" />
             <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
-            <title>{mail_subject}</title>
+            <title>%s</title>
             <style type="text/css">
                 body {{
                     -webkit-font-smoothing: antialiased;
@@ -61,19 +69,25 @@ def send_email(email, user_name, existing_access_key):
             </style>
         </head>
         <body>
-            <p>Hey &#x1F44B; {user_name},</p>
+            <p>Hey &#x1F44B; %s,</p>
             <p>An existing access key pair associated to your username has been deleted because it reached End-Of-Life.<p/>
             <p>
-                Account: <strong>{account_id} ({account_name})</strong>
+                Account: <strong>%s (%s)</strong>
                 <br/>
-                Access Key: <strong>{existing_access_key}</strong>
+                Access Key: <strong>%s</strong>
             </p>
             <p>
                 Thanks,<br/>
                 Your Security Team
             </p>
         </body>
-    </html>"""
+    </html>""",
+        mail_subject,
+        user_name,
+        account_id,
+        account_name,
+        existing_access_key,
+    )
     try:
         logger.info("Using %s as mail client", MAIL_CLIENT)
         if MAIL_CLIENT == "smtp":
