@@ -16,7 +16,7 @@ def send_email(
     mail_to, user_name, mail_subject, mail_from, mail_body_plain, mail_body_html
 ):
     """
-    Use AWS SES API to send email
+    Use AWS SDK to send email via SES
     """
     logger.info("Sending mail to %s (%s) via AWS SES", user_name, mail_to)
     ses.send_email(
