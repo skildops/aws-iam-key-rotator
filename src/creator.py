@@ -5,10 +5,11 @@ Generates new key pair, notifies user and schedules deletion of old key pair
 import os
 import logging
 import concurrent.futures
+from datetime import datetime, date
+
 import pytz
 import boto3
 
-from datetime import datetime, date
 from botocore.exceptions import ClientError
 
 import shared_functions

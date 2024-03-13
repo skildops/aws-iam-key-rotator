@@ -5,9 +5,10 @@ Encrypt key pair shared with user
 import logging
 import sys
 import os
+from cryptography.fernet import Fernet
+
 import boto3
 
-from cryptography.fernet import Fernet
 from botocore.exceptions import ClientError
 
 ssm = boto3.client("ssm", region_name=os.environ.get("AWS_REGION"))

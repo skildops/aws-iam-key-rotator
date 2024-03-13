@@ -6,10 +6,10 @@ import os
 import smtplib
 import ssl
 import logging
-import boto3
-
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+import boto3
 
 ssm = boto3.client("ssm", region_name=os.environ.get("AWS_REGION"))
 
