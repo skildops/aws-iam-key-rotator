@@ -42,6 +42,7 @@ def send_email(email, user_name, existing_access_key):
     account_name = shared_functions.fetch_account_info()["name"]
 
     mail_subject = "Old Access Key Pair Deleted"
+
     mail_body_plain = f"""
     Hey {user_name},\n
     An existing access key pair associated to your username
@@ -50,11 +51,12 @@ def send_email(email, user_name, existing_access_key):
     Access Key: {existing_access_key}\n\n
     Thanks,\n
     Your Security Team"""
+
     mail_body_html = (
         """
     <!DOCTYPE html>
-    <html style="font-family: "Helvetica Neue", Helvetica, Arial,
-    sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
+    <html style="font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                    box-sizing: border-box; font-size: 14px; margin: 0;">
         <head>
             <meta name="viewport" content="width=device-width" />
             <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
@@ -72,7 +74,7 @@ def send_email(email, user_name, existing_access_key):
         <body>
             <p>Hey &#x1F44B; %s,</p>
             <p>An existing access key pair associated to your
-            username has been deleted because it reached End-Of-Life.<p/>
+                username has been deleted because it reached End-Of-Life.<p/>
             <p>
                 Account: <strong>%s (%s)</strong>
                 <br/>
