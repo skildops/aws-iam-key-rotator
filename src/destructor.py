@@ -52,46 +52,39 @@ def send_email(email, user_name, existing_access_key):
     Thanks,\n
     Your Security Team"""
 
-    mail_body_html = (
-        """
+    mail_body_html = f"""
     <!DOCTYPE html>
     <html style="font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
                     box-sizing: border-box; font-size: 14px; margin: 0;">
         <head>
             <meta name="viewport" content="width=device-width" />
             <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
-            <title>%s</title>
+            <title>{mail_subject}</title>
             <style type="text/css">
-                body {{
+                body {{{{
                     -webkit-font-smoothing: antialiased;
                     -webkit-text-size-adjust: none;
                     width: 100% !important;
                     height: 100%;
                     line-height: 1.6em;
-                }}
+                }}}}
             </style>
         </head>
         <body>
-            <p>Hey &#x1F44B; %s,</p>
+            <p>Hey &#x1F44B; {user_name},</p>
             <p>An existing access key pair associated to your
                 username has been deleted because it reached End-Of-Life.<p/>
             <p>
-                Account: <strong>%s (%s)</strong>
+                Account: <strong>{account_id} ({account_name})</strong>
                 <br/>
-                Access Key: <strong>%s</strong>
+                Access Key: <strong>{existing_access_key}</strong>
             </p>
             <p>
                 Thanks,<br/>
                 Your Security Team
             </p>
         </body>
-    </html>""",
-        mail_subject,
-        user_name,
-        account_id,
-        account_name,
-        existing_access_key,
-    )
+    </html>"""
     try:
         logger.info("Using %s as mail client", MAIL_CLIENT)
         if MAIL_CLIENT == "smtp":

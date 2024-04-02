@@ -170,57 +170,46 @@ def send_email(
         Thanks,\n
         Your Security Team"""
 
-        mail_body_html = (
-            """
+        mail_body_html = f"""
         <!DOCTYPE html>
         <html style="font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
                           box-sizing: border-box; font-size: 14px; margin: 0;">
             <head>
                 <meta name="viewport" content="width=device-width" />
                 <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
-                <title>%s</title>
+                <title>{mail_subject}</title>
 
                 <style type="text/css">
-                    body {{
+                    body {{{{
                         -webkit-font-smoothing: antialiased;
                         -webkit-text-size-adjust: none;
                         width: 100% !important;
                         height: 100%;
                         line-height: 1.6em;
-                    }}
+                    }}}}
                 </style>
             </head>
             <body>
-                <p>Hey &#x1F44B; %s,</p>
+                <p>Hey &#x1F44B; {user_name},</p>
                 <p>A new access key pair has been generated for you.
                     Please update the same wherever necessary.</p>
                 <p>
-                    Account: <b>%s (%s)</b>
+                    Account: <b>{account_id} ({account_name})</b>
                     <br/>
-                    Access Key: <b>%s</b>
+                    Access Key: <b>{access_key}</b>
                     <br/>
-                    Secret Access Key: <b>%s</b>
+                    Secret Access Key: <b>{secret_key}</b>
                     <br/>
-                    Instruction: <b>%s</b>
+                    Instruction: <b>{instruction}</b>
                 </p>
-                <p><b>Note:</b> Existing key pair <b>%s</b> will be deleted after
-                    <b>%s</b> days so please update the key pair wherever required.</p>
+                <p><b>Note:</b> Existing key pair <b>{existing_access_key}</b> will be deleted after
+                    <b>{existing_key_delete_age}</b> days so please update the key pair wherever required.</p>
                 <p>
                     Thanks,<br/>
                     Your Security Team
                 </p>
             </body>
-        </html>""",
-            mail_subject,
-            user_name,
-            account_id,
-            account_name,
-            access_key,
-            secret_key,
-            instruction,
-            existing_access_key,
-            existing_key_delete_age,
-        )
+        </html>"""
 
         logger.info("Using %s as mail client", MAIL_CLIENT)
 
@@ -259,7 +248,7 @@ def send_email(
             )
         else:
             logger.error(
-                "%s: Invalid mail client. Supported mail clients: AWS SES and Mailgun",
+                "%s: Invalid mail client",
                 MAIL_CLIENT,
             )
     except (Exception, ClientError) as ce:
@@ -344,11 +333,7 @@ def create_user_key(user_name, user):
                             resp["AccessKey"]["AccessKeyId"],
                             resp["AccessKey"]["SecretAccessKey"],
                         )
-                        user_instruction = (
-                            "The above key pair is encrypted so you need to decrypt it using the encryption key stored in SSM parameter /ikr/secret/iam/%s before using the key pair. You can use the *decryption.py* file present in the *skildops/aws-iam-key-rotator* repo. %s",
-                            user_name,
-                            user["attributes"]["instruction"],
-                        )
+                        user_instruction = f'{user["attributes"]["instruction"]} (The above key pair is encrypted so you need to decrypt it using the encryption key stored in SSM parameter /ikr/secret/iam/{user_name} before using the key pair. You can use the *decryption.py* file present in the *skildops/aws-iam-key-rotator* repo)'
                     else:
                         user_access_key = resp["AccessKey"]["AccessKeyId"]
                         user_secret_access_key = resp["AccessKey"]["SecretAccessKey"]
