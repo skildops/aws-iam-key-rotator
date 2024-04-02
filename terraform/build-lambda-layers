@@ -4,6 +4,8 @@ set -eu
 
 # Script to build/upgrade lambda layers zip
 
+trap "rm -rf "${TEMP_DIR}"" EXIT
+
 CURRENT_DIR="$(pwd)"
 TEMP_DIR="$(mktemp -d)"
 
@@ -31,4 +33,3 @@ zip -r "${CURRENT_DIR}/cryptography.zip" python
 rm -rf python/*
 
 cd "${CURRENT_DIR}"
-rm -rf "${TEMP_DIR}"
