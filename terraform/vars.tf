@@ -84,7 +84,7 @@ variable "cron_expression" {
 
 variable "lambda_runtime" {
   type        = string
-  default     = "python3.9"
+  default     = "python3.11"
   description = "Lambda runtime to use for code execution for both creator and destructor function"
 }
 

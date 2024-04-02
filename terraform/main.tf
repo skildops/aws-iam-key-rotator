@@ -107,31 +107,31 @@ resource "aws_iam_role_policy" "iam_key_creator_policy" {
           "iam:CreateAccessKey",
           "iam:ListAccountAliases"
         ]
-        Resources = ["*"]
+        Resource = ["*"]
         },
         {
           Effect = "Allow"
           Action = [
             "dynamodb:PutItem"
           ]
-          Resources = [aws_dynamodb_table.iam_key_rotator.arn]
+          Resource = [aws_dynamodb_table.iam_key_rotator.arn]
         },
         {
           Effect = "Allow"
           Action = [
             "ssm:GetParameter"
           ]
-          Resources = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"]
+          Resource = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"]
       }],
       var.encrypt_key_pair ? [{
-        Effect    = "Allow"
-        Action    = ["ssm:PutParameter"]
-        Resources = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"]
+        Effect   = "Allow"
+        Action   = ["ssm:PutParameter"]
+        Resource = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/*"]
       }] : [],
       var.mail_client == "ses" ? [{
-        Effect    = "Allow"
-        Action    = ["ses:SendEmail"]
-        Resources = ["*"]
+        Effect   = "Allow"
+        Action   = ["ses:SendEmail"]
+        Resource = ["*"]
       }] : []
     ])
   })
@@ -140,28 +140,6 @@ resource "aws_iam_role_policy" "iam_key_creator_policy" {
 resource "aws_iam_role_policy_attachment" "iam_key_creator_logs" {
   role       = aws_iam_role.iam_key_creator.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_cloudwatch_event_rule" "iam_key_creator" {
-  name                = "IAMAccessKeyCreator"
-  description         = "Triggers a lambda function periodically which creates a set of new access key pair for a user if the existing key pair is X days old"
-  is_enabled          = true
-  schedule_expression = "cron(${var.cron_expression})"
-  tags                = var.tags
-}
-
-resource "aws_cloudwatch_event_target" "iam_key_creator" {
-  rule      = aws_cloudwatch_event_rule.iam_key_creator.name
-  target_id = "TriggerIAMKeyCreatorLambda"
-  arn       = aws_lambda_function.iam_key_creator.arn
-}
-
-resource "aws_lambda_permission" "iam_key_creator" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.iam_key_creator.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.iam_key_creator.arn
 }
 
 resource "aws_ssm_parameter" "mailgun" {
@@ -234,6 +212,28 @@ resource "aws_lambda_function" "iam_key_creator" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_event_rule" "iam_key_creator" {
+  name                = "IAMAccessKeyCreator"
+  description         = "Triggers a lambda function periodically which creates a set of new access key pair for a user if the existing key pair is X days old"
+  state               = "ENABLED"
+  schedule_expression = "cron(${var.cron_expression})"
+  tags                = var.tags
+}
+
+resource "aws_cloudwatch_event_target" "iam_key_creator" {
+  rule      = aws_cloudwatch_event_rule.iam_key_creator.name
+  target_id = "TriggerIAMKeyCreatorLambda"
+  arn       = aws_lambda_function.iam_key_creator.arn
+}
+
+resource "aws_lambda_permission" "iam_key_creator" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.iam_key_creator.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.iam_key_creator.arn
+}
+
 # ====== iam-key-destructor ======
 resource "aws_iam_role" "iam_key_destructor" {
   name                  = var.key_destructor_role_name
@@ -255,14 +255,14 @@ resource "aws_iam_role_policy" "iam_key_destructor_policy" {
           "iam:DeleteAccessKey",
           "iam:ListAccountAliases"
         ]
-        Resources = ["*"]
+        Resource = ["*"]
         },
         {
           Effect = "Allow"
           Action = [
             "dynamodb:PutItem"
           ]
-          Resources = [aws_dynamodb_table.iam_key_rotator.arn]
+          Resource = [aws_dynamodb_table.iam_key_rotator.arn]
         },
         {
           Effect = "Allow"
@@ -273,17 +273,17 @@ resource "aws_iam_role_policy" "iam_key_destructor_policy" {
             "dynamodb:ListShards",
             "dynamodb:ListStreams"
           ]
-          Resources = [aws_dynamodb_table.iam_key_rotator.stream_arn]
+          Resource = [aws_dynamodb_table.iam_key_rotator.stream_arn]
       }],
       var.encrypt_key_pair ? [{
-        Effect    = "Allow"
-        Action    = ["ssm:DeleteParameter"]
-        Resources = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/secret/iam/*"]
+        Effect   = "Allow"
+        Action   = ["ssm:DeleteParameter"]
+        Resource = ["arn:aws:ssm:${var.region}:${local.account_id}:parameter/ikr/secret/iam/*"]
       }] : [],
       var.mail_client == "ses" ? [{
-        Effect    = "Allow"
-        Action    = ["ses:SendEmail"]
-        Resources = ["*"]
+        Effect   = "Allow"
+        Action   = ["ses:SendEmail"]
+        Resource = ["*"]
       }] : []
     ])
   })
@@ -292,13 +292,6 @@ resource "aws_iam_role_policy" "iam_key_destructor_policy" {
 resource "aws_iam_role_policy_attachment" "iam_key_destructor_logs" {
   role       = aws_iam_role.iam_key_destructor.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_lambda_event_source_mapping" "iam_key_destructor" {
-  event_source_arn       = aws_dynamodb_table.iam_key_rotator.stream_arn
-  function_name          = aws_lambda_function.iam_key_destructor.arn
-  starting_position      = "LATEST"
-  maximum_retry_attempts = 0
 }
 
 resource "aws_cloudwatch_log_group" "iam_key_destructor" {
@@ -351,4 +344,13 @@ resource "aws_lambda_function" "iam_key_destructor" {
   }
 
   tags = var.tags
+}
+
+resource "aws_lambda_event_source_mapping" "iam_key_destructor" {
+  event_source_arn       = aws_dynamodb_table.iam_key_rotator.stream_arn
+  function_name          = aws_lambda_function.iam_key_destructor.arn
+  starting_position      = "LATEST"
+  maximum_retry_attempts = 0
+
+  depends_on = [aws_iam_role_policy.iam_key_destructor_policy]
 }
