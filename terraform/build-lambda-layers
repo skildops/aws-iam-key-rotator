@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -eu
+
+# Script to build/upgrade lambda layers zip
+
+CURRENT_DIR="$(pwd)"
+TEMP_DIR="$(mktemp -d)"
+
+mkdir "${TEMP_DIR}/python"
+
+echo "Building requests layer..."
+cd "${TEMP_DIR}/python"
+python3 -m pip install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --target . requests
+cd ..
+zip -r "${CURRENT_DIR}/requests.zip" python
+rm -rf python/*
+
+echo "Building pytz layer..."
+cd "${TEMP_DIR}/python"
+python3 -m pip install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --target . pytz
+cd ..
+zip -r "${CURRENT_DIR}/pytz.zip" python
+rm -rf python/*
+
+echo "Building cryptography layer..."
+cd "${TEMP_DIR}/python"
+python3 -m pip install --platform manylinux2014_x86_64 --implementation cp --only-binary=:all: --target . cryptography
+cd ..
+zip -r "${CURRENT_DIR}/cryptography.zip" python
+rm -rf python/*
+
+cd "${CURRENT_DIR}"
+rm -rf "${TEMP_DIR}"
