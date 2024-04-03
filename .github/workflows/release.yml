@@ -56,6 +56,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: semgrep ci --config "p/ci" --config "p/python" --config "p/owasp-top-ten" --sarif --output=semgrep.sarif
+        env:
+          # Connect to Semgrep Cloud Platform through your SEMGREP_APP_TOKEN.
+          # Generate a token from Semgrep Cloud Platform > Settings
+          # and add it to your GitHub secrets.
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
   release:
     needs: [test, checkov, codeql, semgrep]
     runs-on: ubuntu-latest
